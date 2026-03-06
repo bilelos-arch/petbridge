@@ -18,10 +18,103 @@ enum Role {
   ADMIN
 }
 
+enum Species {
+  CHIEN
+  CHAT
+  AUTRE
+}
+
+enum Sex {
+  MALE
+  FEMELLE
+}
+
+enum Size {
+  PETIT
+  MOYEN
+  GRAND
+}
+
+enum Status {
+  ATTENTE_VALIDATION
+  DISPONIBLE
+  ADOPTE
+  REJETE
+}
+
+enum Temperament {
+  CALME
+  ACTIF
+  TIMIDE
+  PLAYFUL
+  PROTECTEUR
+}
+
 enum HousingType {
   APPARTEMENT
   MAISON
   MAISON_AVEC_JARDIN
+}
+
+model Animal {
+  id               String        @id @default(uuid())
+  name             String
+  species          Species
+  sex              Sex
+  size             Size
+  temperament      Temperament
+  age              Int?
+  description      String?
+  vaccinated       Boolean       @default(false)
+  spayed           Boolean       @default(false)
+  dewormed         Boolean       @default(false)
+  breed            String?
+  color            String?
+  birthDate        DateTime?
+  medicalConditions String?
+  status           Status        @default(ATTENTE_VALIDATION)
+  ownerId          String
+  owner            User          @relation(fields: [ownerId], references: [id])
+  photos           AnimalPhoto[]
+  healthRecords    HealthRecord[]
+  adoptionRequests AdoptionRequest[]
+  createdAt        DateTime      @default(now())
+  updatedAt        DateTime      @updatedAt
+  rejectedReason   String?
+}
+
+model AnimalPhoto {
+  id         String  @id @default(uuid())
+  animalId   String
+  animal     Animal  @relation(fields: [animalId], references: [id])
+  url        String
+  publicId   String?
+  isPrimary  Boolean @default(false)
+  createdAt  DateTime @default(now())
+}
+
+model HealthRecord {
+  id          String    @id @default(uuid())
+  animalId    String
+  animal      Animal    @relation(fields: [animalId], references: [id])
+  title       String
+  description String?
+  date        DateTime
+  veterinarian String?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+}
+
+model AdoptionRequest {
+  id         String    @id @default(uuid())
+  animalId   String
+  animal     Animal    @relation(fields: [animalId], references: [id])
+  adopterId  String
+  adopter    User      @relation(fields: [adopterId], references: [id])
+  status     Status    @default(ATTENTE_VALIDATION)
+  message    String?
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
 }
 
 model User {
@@ -33,6 +126,8 @@ model User {
   isBanned     Boolean  @default(false)
   refreshTokens RefreshToken[]
   profile      UserProfile?
+  animals      Animal[]
+  adoptionRequests AdoptionRequest[]
 }
 
 model RefreshToken {
