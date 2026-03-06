@@ -1,5 +1,5 @@
 import { IsString, IsEnum, IsOptional, IsBoolean, IsNumber, IsDateString } from 'class-validator';
-import { Species, Sex, Size, Status, Temperament } from '@prisma/client';
+import { Species, Sex, Size, AnimalStatus, Temperament } from '@prisma/client';
 
 export class AnimalFiltersDto {
   @IsOptional()
@@ -19,8 +19,8 @@ export class AnimalFiltersDto {
   temperament?: Temperament;
 
   @IsOptional()
-  @IsEnum(Status)
-  status?: Status;
+  @IsEnum(AnimalStatus)
+  status?: AnimalStatus;
 
   @IsOptional()
   @IsBoolean()
