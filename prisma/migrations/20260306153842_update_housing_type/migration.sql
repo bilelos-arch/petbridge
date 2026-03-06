@@ -1,0 +1,2 @@
+-- AlterEnum
+ALTER TYPE "HousingType" ADD VALUE 'MAISON_AVEC_JARDIN';
