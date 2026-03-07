@@ -1,322 +1,352 @@
-import { useState, useCallback } from 'react';
-import { FileText, AlertCircle, CheckCircle, XCircle, Clock, ShieldAlert, Ban } from 'lucide-react';
-import { Button } from '../components/ui/button';
-import { Select } from '../components/ui/select';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../components/ui/table';
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '../components/ui/dialog';
-import { Textarea } from '../components/ui/textarea';
-import { Label } from '../components/ui/label';
+import React, { useState } from 'react';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '../components/ui/table';
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+} from '../components/ui/card';
 import { Badge } from '../components/ui/badge';
+import { Button } from '../components/ui/button';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '../components/ui/dialog';
+import { Label } from '../components/ui/label';
+import { Select } from '../components/ui/select';
+import { Textarea } from '../components/ui/textarea';
 import { Skeleton } from '../components/ui/skeleton';
-import { useAdminReports, type Report } from '../hooks/useAdminReports';
+import { useAdminReports } from '../hooks/useAdminReports';
 
-export default function Reports() {
+const ReportsPage: React.FC = () => {
+  const [statusFilter, setStatusFilter] = useState<string>('');
+  const [targetFilter, setTargetFilter] = useState<string>('');
+  const [selectedReport, setSelectedReport] = useState<any>(null);
+  const [newStatus, setNewStatus] = useState<string>('');
+  const [adminNote, setAdminNote] = useState<string>('');
+  const [isBanDialogOpen, setIsBanDialogOpen] = useState(false);
+  const [banReason, setBanReason] = useState<string>('');
+
   const {
     reports,
     loading,
-    currentPage,
-    totalPages,
-    filters,
-    updateReportStatus,
-    banUserFromReport,
     handleStatusChange,
     handleCibleChange,
-    handlePageChange,
+    updateReportStatus,
+    banUserFromReport,
   } = useAdminReports();
 
-  const [treatDialogOpen, setTreatDialogOpen] = useState(false);
-  const [selectedReport, setSelectedReport] = useState<Report | null>(null);
-  const [newStatus, setNewStatus] = useState<'OUVERT' | 'EN_COURS' | 'RESOLU' | 'REJETE'>('OUVERT');
-  const [adminNote, setAdminNote] = useState('');
-  const [banUser, setBanUser] = useState(false);
-
-  const handleTreatClick = useCallback((report: Report) => {
+  const handleOpenDialog = (report: any) => {
     setSelectedReport(report);
     setNewStatus(report.status);
     setAdminNote('');
-    setBanUser(false);
-    setTreatDialogOpen(true);
-  }, []);
-
-  const handleTreatConfirm = useCallback(async () => {
-    if (!selectedReport) return;
-    
-    await updateReportStatus(selectedReport.id, newStatus, adminNote);
-    
-    if (banUser && selectedReport.reportedUserId) {
-      await banUserFromReport(selectedReport.id);
-    }
-    
-    setTreatDialogOpen(false);
-    setSelectedReport(null);
-  }, [selectedReport, newStatus, adminNote, banUser, updateReportStatus, banUserFromReport]);
-
-  const formatDate = (dateString: Date) => {
-    return new Date(dateString).toLocaleDateString('fr-FR', {
-      day: '2-digit',
-      month: '2-digit',
-      year: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit',
-    });
   };
 
-  const getStatusBadge = (status: string) => {
+  const handleBanDialogOpen = (report: any) => {
+    setSelectedReport(report);
+    setBanReason('');
+    setIsBanDialogOpen(true);
+  };
+
+  const getStatusBadgeColor = (status: string) => {
     switch (status) {
       case 'OUVERT':
-        return <Badge variant="outline" className="flex items-center gap-1 text-blue-600 border-blue-200 bg-blue-50">
-          <AlertCircle className="h-3 w-3" />
-          Ouvert
-        </Badge>;
+        return 'bg-red-100 text-red-800 hover:bg-red-200';
       case 'EN_COURS':
-        return <Badge variant="outline" className="flex items-center gap-1 text-yellow-600 border-yellow-200 bg-yellow-50">
-          <Clock className="h-3 w-3" />
-          En cours
-        </Badge>;
+        return 'bg-orange-100 text-orange-800 hover:bg-orange-200';
       case 'RESOLU':
-        return <Badge variant="outline" className="flex items-center gap-1 text-green-600 border-green-200 bg-green-50">
-          <CheckCircle className="h-3 w-3" />
-          Résolu
-        </Badge>;
+        return 'bg-green-100 text-green-800 hover:bg-green-200';
       case 'REJETE':
-        return <Badge variant="outline" className="flex items-center gap-1 text-red-600 border-red-200 bg-red-50">
-          <XCircle className="h-3 w-3" />
-          Rejeté
-        </Badge>;
+        return 'bg-gray-100 text-gray-800 hover:bg-gray-200';
       default:
-        return <Badge variant="outline">{status}</Badge>;
+        return 'bg-gray-100 text-gray-800 hover:bg-gray-200';
     }
   };
 
-  const getCibleLabel = (cible: string) => {
-    switch (cible) {
+  const getTargetBadgeColor = (target: string) => {
+    switch (target) {
       case 'UTILISATEUR':
-        return 'Utilisateur';
+        return 'bg-blue-100 text-blue-800 hover:bg-blue-200';
       case 'ANIMAL':
-        return 'Animal';
+        return 'bg-purple-100 text-purple-800 hover:bg-purple-200';
       case 'MESSAGE':
-        return 'Message';
+        return 'bg-indigo-100 text-indigo-800 hover:bg-indigo-200';
       default:
-        return cible;
+        return 'bg-gray-100 text-gray-800 hover:bg-gray-200';
     }
   };
 
   return (
-    <div className="flex flex-col gap-6">
-      <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-slate-900">Gestion des Signalements</h1>
-          <p className="text-slate-500 mt-1">
-            Traitez les signalements d'utilisateurs, mettez à jour les statuts et bannissez les utilisateurs si nécessaire
-          </p>
+    <div className="min-h-screen bg-gray-100 py-8">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <h1 className="text-3xl font-bold text-gray-900 mb-8">
+          Gestion des Signalements
+        </h1>
+
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-8">
+          <Card className="lg:col-span-3">
+            <CardHeader>
+              <CardTitle>Filtres</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="flex gap-4">
+                <div className="flex-1">
+                  <Label htmlFor="statusFilter">Statut</Label>
+                  <Select
+                    id="statusFilter"
+                    value={statusFilter}
+                    onChange={(e) => {
+                      setStatusFilter(e.target.value);
+                      handleStatusChange(e.target.value as 'all' | 'OUVERT' | 'EN_COURS' | 'RESOLU' | 'REJETE');
+                    }}
+                    className="mt-1"
+                  >
+                    <option value="all">Tous les statuts</option>
+                    <option value="OUVERT">🔴 Ouvert</option>
+                    <option value="EN_COURS">🟠 En cours</option>
+                    <option value="RESOLU">🟢 Résolu</option>
+                    <option value="REJETE">⚫ Rejeté</option>
+                  </Select>
+                </div>
+
+                <div className="flex-1">
+                  <Label htmlFor="targetFilter">Type de cible</Label>
+                  <Select
+                    id="targetFilter"
+                    value={targetFilter}
+                    onChange={(e) => {
+                      setTargetFilter(e.target.value);
+                      handleCibleChange(e.target.value as 'all' | 'UTILISATEUR' | 'ANIMAL' | 'MESSAGE');
+                    }}
+                    className="mt-1"
+                  >
+                    <option value="all">Tous les types</option>
+                    <option value="UTILISATEUR">👤 Utilisateur</option>
+                    <option value="ANIMAL">🐾 Animal</option>
+                    <option value="MESSAGE">💬 Message</option>
+                  </Select>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
         </div>
-      </div>
 
-      <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-        <div className="flex flex-col gap-4 lg:flex-row">
-          <Select
-            value={filters.status}
-            onChange={(e) => handleStatusChange(e.target.value as 'all' | 'OUVERT' | 'EN_COURS' | 'RESOLU' | 'REJETE')}
-            className="w-full lg:w-40"
-          >
-            <option value="all">Tous les statuts</option>
-            <option value="OUVERT">Ouvert</option>
-            <option value="EN_COURS">En cours</option>
-            <option value="RESOLU">Résolu</option>
-            <option value="REJETE">Rejeté</option>
-          </Select>
-
-          <Select
-            value={filters.cible}
-            onChange={(e) => handleCibleChange(e.target.value as 'all' | 'UTILISATEUR' | 'ANIMAL' | 'MESSAGE')}
-            className="w-full lg:w-40"
-          >
-            <option value="all">Tous les types</option>
-            <option value="UTILISATEUR">Utilisateur</option>
-            <option value="ANIMAL">Animal</option>
-            <option value="MESSAGE">Message</option>
-          </Select>
-        </div>
-      </div>
-
-      <div className="border rounded-lg border-slate-200 bg-white shadow-sm">
-        <Table>
-          <TableHeader className="bg-slate-50">
-            <TableRow>
-              <TableHead>Type</TableHead>
-              <TableHead>Raison</TableHead>
-              <TableHead>Signalé par</TableHead>
-              <TableHead>Statut</TableHead>
-              <TableHead>Date</TableHead>
-              <TableHead className="text-right">Actions</TableHead>
-            </TableRow>
-          </TableHeader>
-
-          <TableBody>
+        <Card>
+          <CardHeader>
+            <CardTitle>Signalements</CardTitle>
+          </CardHeader>
+          <CardContent>
             {loading ? (
-              Array.from({ length: 5 }).map((_, i) => (
-                <TableRow key={i}>
-                  <TableCell>
-                    <Skeleton className="h-4 w-24" />
-                  </TableCell>
-                  <TableCell>
-                    <Skeleton className="h-4 w-64" />
-                  </TableCell>
-                  <TableCell>
+              <div className="space-y-4">
+                {[...Array(5)].map((_, index) => (
+                  <div key={index} className="flex gap-4">
+                    <Skeleton className="h-4 w-20" />
+                    <Skeleton className="h-4 flex-1" />
                     <Skeleton className="h-4 w-32" />
-                  </TableCell>
-                  <TableCell>
-                    <Skeleton className="h-6 w-16 rounded-full" />
-                  </TableCell>
-                  <TableCell>
-                    <Skeleton className="h-4 w-24" />
-                  </TableCell>
-                  <TableCell className="text-right">
-                    <Skeleton className="h-8 w-20 ml-auto" />
-                  </TableCell>
-                </TableRow>
-              ))
-            ) : reports.length === 0 ? (
-              <TableRow>
-                <TableCell colSpan={6} className="text-center py-12 text-slate-500">
-                  <div className="flex flex-col items-center gap-2">
-                    <FileText className="h-12 w-12 text-slate-300" />
-                    <p className="text-lg font-medium">Aucun signalement trouvé</p>
-                    <p className="text-sm">Essayez de modifier vos filtres</p>
+                    <Skeleton className="h-4 w-32" />
                   </div>
-                </TableCell>
-              </TableRow>
+                ))}
+              </div>
+            ) : !reports || reports.length === 0 ? (
+              <div className="text-center py-10 text-gray-500">
+                Aucun signalement trouvé
+              </div>
             ) : (
-              reports.map((report) => (
-                <TableRow key={report.id} className="hover:bg-slate-50">
-                  <TableCell>
-                    <Badge variant="secondary" className="capitalize">
-                      {getCibleLabel(report.cible)}
-                    </Badge>
-                  </TableCell>
-                  <TableCell>
-                    <div className="font-medium">{report.raison}</div>
-                    {report.description && (
-                      <div className="text-slate-500 text-sm mt-1">{report.description}</div>
-                    )}
-                  </TableCell>
-                  <TableCell>
-                    <div className="text-slate-500">{report.reporterId}</div>
-                  </TableCell>
-                  <TableCell>
-                    {getStatusBadge(report.status)}
-                  </TableCell>
-                  <TableCell>
-                    <div className="text-slate-500">{formatDate(report.createdAt)}</div>
-                  </TableCell>
-                  <TableCell className="text-right">
-                    <Button
-                      variant="secondary"
-                      size="sm"
-                      onClick={() => handleTreatClick(report)}
-                    >
-                      Traiter
-                    </Button>
-                  </TableCell>
-                </TableRow>
-              ))
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Type</TableHead>
+                    <TableHead>Raison</TableHead>
+                    <TableHead>Signalé par</TableHead>
+                    <TableHead>Statut</TableHead>
+                    <TableHead>Date</TableHead>
+                    <TableHead>Actions</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {reports.map((report: any) => (
+                    <TableRow key={report.id}>
+                      <TableCell>
+                        <Badge className={getTargetBadgeColor(report.cible)}>
+                          {report.cible === 'UTILISATEUR' && '👤 Utilisateur'}
+                          {report.cible === 'ANIMAL' && '🐾 Animal'}
+                          {report.cible === 'MESSAGE' && '💬 Message'}
+                        </Badge>
+                      </TableCell>
+                      <TableCell className="max-w-xs truncate" title={report.raison}>
+                        {report.raison}
+                      </TableCell>
+                      <TableCell>User {report.reporterId}</TableCell>
+                      <TableCell>
+                        <Badge className={getStatusBadgeColor(report.status)}>
+                          {report.status === 'OUVERT' && '🔴 Ouvert'}
+                          {report.status === 'EN_COURS' && '🟠 En cours'}
+                          {report.status === 'RESOLU' && '🟢 Résolu'}
+                          {report.status === 'REJETE' && '⚫ Rejeté'}
+                        </Badge>
+                      </TableCell>
+                      <TableCell>
+                        {new Date(report.createdAt).toLocaleDateString('fr-FR', {
+                          year: 'numeric',
+                          month: 'short',
+                          day: 'numeric',
+                          hour: '2-digit',
+                          minute: '2-digit',
+                        })}
+                      </TableCell>
+                      <TableCell>
+                        <Button
+                          variant="default"
+                          size="sm"
+                          onClick={() => handleOpenDialog(report)}
+                        >
+                          Traiter
+                        </Button>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
             )}
-          </TableBody>
-        </Table>
+          </CardContent>
+        </Card>
 
-        {!loading && reports.length > 0 && (
-          <div className="flex items-center justify-between px-6 py-4 border-t border-slate-200">
-            <div className="text-sm text-slate-500">
-              Page {currentPage} sur {totalPages}
-            </div>
-            <div className="flex items-center gap-2">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => handlePageChange(currentPage - 1)}
-                disabled={currentPage === 1}
-              >
-                Précédent
-              </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => handlePageChange(currentPage + 1)}
-                disabled={currentPage === totalPages}
-              >
-                Suivant
-              </Button>
-            </div>
-          </div>
-        )}
-      </div>
+        <Dialog open={!!selectedReport} onOpenChange={() => setSelectedReport(null)}>
+          <DialogContent className="sm:max-w-lg">
+            <DialogHeader>
+              <DialogTitle>Traiter le Signalement</DialogTitle>
+              <DialogDescription>
+                Modifier le statut du signalement et ajouter une note admin si nécessaire.
+              </DialogDescription>
+            </DialogHeader>
 
-      <Dialog open={treatDialogOpen} onOpenChange={setTreatDialogOpen}>
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <ShieldAlert className="h-5 w-5 text-yellow-500" />
-              Traiter le signalement
-            </DialogTitle>
-            <DialogDescription>
-              Mettez à jour le statut du signalement et ajoutez une note administrateur si nécessaire.
-            </DialogDescription>
-          </DialogHeader>
+            {selectedReport && (
+              <div className="space-y-4">
+                <div>
+                  <Label>Type de signalement</Label>
+                  <div className="mt-1">
+                    <Badge className={getTargetBadgeColor(selectedReport.cible)}>
+                      {selectedReport.cible === 'UTILISATEUR' && '👤 Utilisateur'}
+                      {selectedReport.cible === 'ANIMAL' && '🐾 Animal'}
+                      {selectedReport.cible === 'MESSAGE' && '💬 Message'}
+                    </Badge>
+                  </div>
+                </div>
 
-          <div className="space-y-4 py-4">
-            <div className="space-y-2">
-              <Label htmlFor="status">Statut</Label>
-              <Select
-                id="status"
-                value={newStatus}
-                onChange={(e) => setNewStatus(e.target.value as 'OUVERT' | 'EN_COURS' | 'RESOLU' | 'REJETE')}
-                className="w-full"
-              >
-                <option value="OUVERT">Ouvert</option>
-                <option value="EN_COURS">En cours</option>
-                <option value="RESOLU">Résolu</option>
-                <option value="REJETE">Rejeté</option>
-              </Select>
-            </div>
+                <div>
+                  <Label>Raison du signalement</Label>
+                  <div className="mt-1 p-2 bg-gray-50 rounded-md">
+                    {selectedReport.raison}
+                  </div>
+                </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="note">Note administrateur</Label>
-              <Textarea
-                id="note"
-                placeholder="Ajoutez une note pour expliquer le traitement..."
-                className="min-h-[100px]"
-                value={adminNote}
-                onChange={(e) => setAdminNote(e.target.value)}
-              />
-            </div>
+                <div>
+                  <Label htmlFor="status">Statut</Label>
+                  <Select
+                    id="status"
+                    value={newStatus}
+                    onChange={(e) => setNewStatus(e.target.value)}
+                    className="mt-1"
+                  >
+                    <option value="OUVERT">🔴 Ouvert</option>
+                    <option value="EN_COURS">🟠 En cours</option>
+                    <option value="RESOLU">🟢 Résolu</option>
+                    <option value="REJETE">⚫ Rejeté</option>
+                  </Select>
+                </div>
 
-            {selectedReport?.cible === 'UTILISATEUR' && (
-              <div className="flex items-center gap-2">
-                <input
-                  type="checkbox"
-                  id="banUser"
-                  checked={banUser}
-                  onChange={(e) => setBanUser(e.target.checked)}
-                  className="rounded border-slate-300 text-indigo-600 focus:ring-indigo-600"
-                />
-                <Label htmlFor="banUser" className="flex items-center gap-1 cursor-pointer">
-                  <Ban className="h-4 w-4 text-red-500" />
-                  Bannir l'utilisateur signalé
-                </Label>
+                <div>
+                  <Label htmlFor="adminNote">Note admin (optionnel)</Label>
+                  <Textarea
+                    id="adminNote"
+                    value={adminNote}
+                    onChange={(e) => setAdminNote(e.target.value)}
+                    placeholder="Ajouter une note pour le suivi..."
+                    className="mt-1"
+                    rows={3}
+                  />
+                </div>
+
+                <div className="pt-4 border-t">
+                  {selectedReport.cible === 'UTILISATEUR' && selectedReport.status !== 'RESOLU' && (
+                    <Button
+                      variant="destructive"
+                      onClick={() => handleBanDialogOpen(selectedReport)}
+                    >
+                      Bannir l'utilisateur
+                    </Button>
+                  )}
+                </div>
+
+                <div className="flex gap-2">
+                  <Button variant="secondary" onClick={() => setSelectedReport(null)}>
+                    Annuler
+                  </Button>
+                  <Button
+                    onClick={() =>
+                      updateReportStatus(selectedReport.id, newStatus as 'OUVERT' | 'EN_COURS' | 'RESOLU' | 'REJETE', adminNote)
+                    }
+                    disabled={!newStatus}
+                  >
+                    Mettre à jour le statut
+                  </Button>
+                </div>
               </div>
             )}
-          </div>
+          </DialogContent>
+        </Dialog>
 
-          <DialogFooter className="sm:justify-between">
-            <Button variant="outline" onClick={() => setTreatDialogOpen(false)}>
-              Annuler
-            </Button>
-            <Button variant="default" onClick={handleTreatConfirm}>
-              Enregistrer
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+        <Dialog open={isBanDialogOpen} onOpenChange={setIsBanDialogOpen}>
+          <DialogContent className="sm:max-w-md">
+            <DialogHeader>
+              <DialogTitle>Bannir l'utilisateur</DialogTitle>
+              <DialogDescription>
+                Cette action est irréversible. L'utilisateur ne pourra plus accéder à son compte.
+              </DialogDescription>
+            </DialogHeader>
+
+            <div className="space-y-4">
+              <div>
+                <Label htmlFor="banReason">Raison du bannissement</Label>
+                <Textarea
+                  id="banReason"
+                  value={banReason}
+                  onChange={(e) => setBanReason(e.target.value)}
+                  placeholder="Expliquer le motif du bannissement..."
+                  className="mt-1"
+                  rows={3}
+                />
+              </div>
+            </div>
+
+            <DialogFooter>
+              <Button variant="secondary" onClick={() => setIsBanDialogOpen(false)}>
+                Annuler
+              </Button>
+              <Button
+                variant="destructive"
+                onClick={() => banUserFromReport(selectedReport.id)}
+                disabled={!banReason.trim()}
+              >
+                Confirmer le bannissement
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+      </div>
     </div>
   );
-}
+};
+
+export default ReportsPage;

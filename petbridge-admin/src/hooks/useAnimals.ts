@@ -1,76 +1,61 @@
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import api from '../lib/axios'
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import api from '../lib/axios';
+import { toast } from 'sonner';
 
 // Types for Animal data
 export interface Animal {
-  id: string
-  name: string
-  species: string
-  breed: string
-  age: number
-  gender: string
-  description: string
-  status: 'PENDING' | 'AVAILABLE' | 'ADOPTED' | 'REJECTED'
-  createdAt: Date
-  updatedAt: Date
-  ownerId: string
+  id: string;
+  name: string;
+  species: string;
+  status: 'DISPONIBLE' | 'ATTENTE_VALIDATION' | 'ADOPTE' | 'REJETE';
+  createdAt: Date;
+  updatedAt: Date;
 }
 
-export interface RejectAnimalDto {
-  reason: string
-}
+export function useAnimals() {
+  const queryClient = useQueryClient();
 
-// Hook for fetching animals
-export const useAnimals = (filters?: Record<string, unknown>) => {
-  return useQuery<Animal[]>({
-    queryKey: ['animals', filters],
+  const { data: animals, isLoading, error } = useQuery({
+    queryKey: ['animals'],
     queryFn: async () => {
-      const params = new URLSearchParams()
-      if (filters) {
-        Object.entries(filters).forEach(([key, value]) => {
-          if (value !== undefined && value !== null) {
-            params.append(key, String(value))
-          }
-        })
-      }
-      const response = await api.get(`/animals?${params.toString()}`)
-      return response.data
+      const response = await api.get('/animals');
+      return response.data;
     },
-  })
-}
+  });
 
-// Hook for approving an animal
-export const useApproveAnimal = () => {
-  const queryClient = useQueryClient()
-
-  return useMutation<unknown, Error, string>({
+  const approveAnimal = useMutation({
     mutationFn: async (animalId: string) => {
-      const response = await api.put(`/animals/${animalId}/approve`)
-      return response.data
+      await api.put(`/animals/${animalId}/approve`);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['animals'] })
+      queryClient.invalidateQueries({ queryKey: ['animals'] });
+      toast.success('Animal approuvé avec succès');
     },
-    onError: (error: Error) => {
-      console.error('Failed to approve animal:', error)
+    onError: (error: any) => {
+      console.error('Error approving animal:', error);
+      toast.error('Échec de l\'approbation de l\'animal');
     },
-  })
-}
+  });
 
-// Hook for rejecting an animal
-export const useRejectAnimal = () => {
-  const queryClient = useQueryClient()
-
-  return useMutation<unknown, Error, { animalId: string; reason: string }>({
-    mutationFn: async ({ animalId, reason }: { animalId: string; reason: string }) => {
-      const response = await api.put(`/animals/${animalId}/reject`, { reason })
-      return response.data
+  const rejectAnimal = useMutation({
+    mutationFn: async ({ animalId, rejectedReason }: { animalId: string; rejectedReason: string }) => {
+      await api.put(`/animals/${animalId}/reject`, { rejectedReason });
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['animals'] })
+      queryClient.invalidateQueries({ queryKey: ['animals'] });
+      toast.success('Animal rejeté avec succès');
     },
-    onError: (error: Error) => {
-      console.error('Failed to reject animal:', error)
+    onError: (error: any) => {
+      console.error('Error rejecting animal:', error);
+      toast.error('Échec du rejet de l\'animal');
     },
-  })
+  });
+
+  return {
+    animals,
+    isLoading,
+    error,
+    approveAnimal,
+    rejectAnimal,
+  };
 }
