@@ -7,8 +7,8 @@ import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
 import Animals from './pages/Animals';
 import Users from './pages/Users';
+import Reports from './pages/Reports';
 const Adoptions = () => <div className="p-6">Adoptions Page</div>;
-const Reports = () => <div className="p-6">Reports Page</div>;
 
 const App: React.FC = () => {
   return (

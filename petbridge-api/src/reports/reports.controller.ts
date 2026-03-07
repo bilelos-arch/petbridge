@@ -1,4 +1,4 @@
-import { Controller, Post, Get, Patch, Param, Body, UseGuards } from '@nestjs/common';
+import { Controller, Post, Get, Patch, Param, Body, UseGuards, Query } from '@nestjs/common';
 import { ReportsService } from './reports.service';
 import { CreateReportDto } from './dto/create-report.dto';
 import { UpdateReportStatusDto } from './dto/update-report-status.dto';
@@ -30,8 +30,14 @@ export class ReportsController {
   @Get()
   @UseGuards(RolesGuard)
   @Roles(Role.ADMIN)
-  async getAllReports(@Body() filters: ReportFiltersDto) {
-    return this.reportsService.getAllReports(filters);
+  async getAllReports(@Body() filters: ReportFiltersDto, @Query('page') page?: string, @Query('limit') limit?: string) {
+    const parsedPage = page ? parseInt(page, 10) : undefined;
+    const parsedLimit = limit ? parseInt(limit, 10) : undefined;
+    return this.reportsService.getAllReports({
+      ...filters,
+      page: parsedPage,
+      limit: parsedLimit,
+    });
   }
 
   @Get(':id')

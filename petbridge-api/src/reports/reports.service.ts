@@ -33,22 +33,46 @@ export class ReportsService {
     });
   }
 
-  async getAllReports(filters: ReportFiltersDto) {
-    return this.prisma.report.findMany({
-      where: {
-        ...(filters.status && { status: filters.status }),
-        ...(filters.cible && { cible: filters.cible }),
-      },
-      include: {
-        author: {
-          select: {
-            id: true,
-            email: true,
-            profile: true,
+  async getAllReports(filters: ReportFiltersDto & { page?: number; limit?: number }) {
+    const { page = 1, limit = 10, status, cible } = filters;
+    const skip = (page - 1) * limit;
+
+    const where: any = {};
+    if (status) {
+      where.status = status;
+    }
+    if (cible) {
+      where.cible = cible;
+    }
+
+    const [data, total] = await Promise.all([
+      this.prisma.report.findMany({
+        where,
+        include: {
+          author: {
+            select: {
+              id: true,
+              email: true,
+              profile: true,
+            },
           },
         },
-      },
-    });
+        orderBy: { createdAt: 'desc' },
+        skip,
+        take: limit,
+      }),
+      this.prisma.report.count({ where }),
+    ]);
+
+    const totalPages = Math.ceil(total / limit);
+
+    return {
+      data,
+      total,
+      page,
+      limit,
+      totalPages,
+    };
   }
 
   async getReportById(id: string) {
