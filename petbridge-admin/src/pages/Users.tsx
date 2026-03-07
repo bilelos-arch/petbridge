@@ -56,8 +56,11 @@ export default function Users() {
     });
   };
 
-  const getInitials = (firstName: string, lastName: string) => {
-    return (firstName[0] + lastName[0]).toUpperCase();
+  const getInitials = (user: User) => {
+  if (user.firstName && user.lastName) {
+    return (user.firstName[0] + user.lastName[0]).toUpperCase();
+  }
+  return user.email[0].toUpperCase();
   };
 
   return (
@@ -158,7 +161,7 @@ export default function Users() {
                           className="h-full w-full rounded-full object-cover"
                         />
                       ) : (
-                        getInitials(user.firstName, user.lastName)
+                        getInitials(user)
                       )}
                     </div>
                   </TableCell>
@@ -259,7 +262,7 @@ export default function Users() {
               Bannir utilisateur
             </DialogTitle>
             <DialogDescription>
-              Êtes-vous sûr de vouloir bannir {selectedUser?.firstName} {selectedUser?.lastName} ?
+              Êtes-vous sûr de vouloir bannir {selectedUser?.firstName || selectedUser?.email} ?
               Cette action est réversible.
             </DialogDescription>
           </DialogHeader>

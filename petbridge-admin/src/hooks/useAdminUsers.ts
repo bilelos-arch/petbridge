@@ -54,7 +54,7 @@ export function useAdminUsers() {
         createdAt: user.createdAt,
       }));
       setUsers(mappedUsers);
-      setTotalPages(response.data.meta.totalPages);
+      setTotalPages(response.data.totalPages);
     } catch (error: any) {
       console.error('Error fetching users:', error);
       toast.error('Échec du chargement des utilisateurs');
