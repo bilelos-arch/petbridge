@@ -8,6 +8,7 @@ import { UsersModule } from './users/users.module';
 import { AnimalsModule } from './animals/animals.module';
 import { AdoptionsModule } from './adoptions/adoptions.module';
 import { ThreadsModule } from './threads/threads.module';
+import { CheckInsModule } from './checkins/checkins.module';
 
 @Module({
   imports: [
@@ -18,6 +19,7 @@ import { ThreadsModule } from './threads/threads.module';
     AnimalsModule,
     AdoptionsModule,
     ThreadsModule,
+    CheckInsModule,
   ],
   controllers: [AppController],
   providers: [AppService],
