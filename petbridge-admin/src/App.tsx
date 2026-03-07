@@ -6,8 +6,8 @@ import AdminLayout from './components/layout/AdminLayout';
 import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
 import Animals from './pages/Animals';
+import Users from './pages/Users';
 const Adoptions = () => <div className="p-6">Adoptions Page</div>;
-const Users = () => <div className="p-6">Users Page</div>;
 const Reports = () => <div className="p-6">Reports Page</div>;
 
 const App: React.FC = () => {
