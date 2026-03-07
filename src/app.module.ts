@@ -7,6 +7,7 @@ import { AuthModule } from './auth/auth.module';
 import { UsersModule } from './users/users.module';
 import { AnimalsModule } from './animals/animals.module';
 import { AdoptionsModule } from './adoptions/adoptions.module';
+import { ThreadsModule } from './threads/threads.module';
 
 @Module({
   imports: [
@@ -16,6 +17,7 @@ import { AdoptionsModule } from './adoptions/adoptions.module';
     UsersModule,
     AnimalsModule,
     AdoptionsModule,
+    ThreadsModule,
   ],
   controllers: [AppController],
   providers: [AppService],
