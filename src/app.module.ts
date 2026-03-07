@@ -9,6 +9,7 @@ import { AnimalsModule } from './animals/animals.module';
 import { AdoptionsModule } from './adoptions/adoptions.module';
 import { ThreadsModule } from './threads/threads.module';
 import { CheckInsModule } from './checkins/checkins.module';
+import { ReportsModule } from './reports/reports.module';
 
 @Module({
   imports: [
@@ -20,6 +21,7 @@ import { CheckInsModule } from './checkins/checkins.module';
     AdoptionsModule,
     ThreadsModule,
     CheckInsModule,
+    ReportsModule,
   ],
   controllers: [AppController],
   providers: [AppService],
