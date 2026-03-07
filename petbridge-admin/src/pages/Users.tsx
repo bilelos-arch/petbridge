@@ -10,6 +10,7 @@ import { Label } from '../components/ui/label';
 import { Badge } from '../components/ui/badge';
 import { Skeleton } from '../components/ui/skeleton';
 import { useAdminUsers, type User } from '../hooks/useAdminUsers';
+import { PageHeader } from '../components/ui/PageHeader';
 
 export default function Users() {
   const {
@@ -64,14 +65,14 @@ export default function Users() {
   };
 
   return (
-    <div className="flex flex-col gap-6">
-      <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-slate-900">Gestion des Utilisateurs</h1>
-          <p className="text-slate-500 mt-1">
-            Gérez les comptes utilisateurs, bannissez ou débannissez des utilisateurs
-          </p>
-        </div>
+    <div className="min-h-screen bg-slate-50 py-8">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8">
+        <PageHeader
+          title="Gestion des Utilisateurs"
+          description="Gérez les comptes utilisateurs, bannissez ou débannissez des utilisateurs"
+        />
+
+        <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
       </div>
 
       <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
@@ -98,7 +99,7 @@ export default function Users() {
         </div>
       </div>
 
-      <div className="border rounded-lg border-slate-200 bg-white shadow-sm">
+        <div className="border rounded-lg border-slate-200 bg-white shadow-sm">
         <Table>
           <TableHeader className="bg-slate-50">
             <TableRow>
@@ -166,7 +167,12 @@ export default function Users() {
                     </div>
                   </TableCell>
                   <TableCell>
-                    <div className="font-medium">{user.firstName} {user.lastName}</div>
+                    <div className="font-medium">
+                      {user.firstName && user.lastName
+                        ? `${user.firstName} ${user.lastName}`
+                        : <span className="text-slate-400 italic">Sans profil</span>
+                      }
+                    </div>
                   </TableCell>
                   <TableCell>
                     <div className="text-slate-500">{user.email}</div>
@@ -290,6 +296,7 @@ export default function Users() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+      </div>
     </div>
   );
 }

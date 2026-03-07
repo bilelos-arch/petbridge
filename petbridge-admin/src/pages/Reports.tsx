@@ -28,6 +28,8 @@ import { Select } from '../components/ui/select';
 import { Textarea } from '../components/ui/textarea';
 import { Skeleton } from '../components/ui/skeleton';
 import { useAdminReports } from '../hooks/useAdminReports';
+import { PageHeader } from '../components/ui/PageHeader';
+import { StatusBadge } from '../components/ui/StatusBadge';
 
 const ReportsPage: React.FC = () => {
   const [statusFilter, setStatusFilter] = useState<string>('');
@@ -59,20 +61,6 @@ const ReportsPage: React.FC = () => {
     setIsBanDialogOpen(true);
   };
 
-  const getStatusBadgeColor = (status: string) => {
-    switch (status) {
-      case 'OUVERT':
-        return 'bg-red-100 text-red-800 hover:bg-red-200';
-      case 'EN_COURS':
-        return 'bg-orange-100 text-orange-800 hover:bg-orange-200';
-      case 'RESOLU':
-        return 'bg-green-100 text-green-800 hover:bg-green-200';
-      case 'REJETE':
-        return 'bg-gray-100 text-gray-800 hover:bg-gray-200';
-      default:
-        return 'bg-gray-100 text-gray-800 hover:bg-gray-200';
-    }
-  };
 
   const getTargetBadgeColor = (target: string) => {
     switch (target) {
@@ -88,14 +76,15 @@ const ReportsPage: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-100 py-8">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <h1 className="text-3xl font-bold text-gray-900 mb-8">
-          Gestion des Signalements
-        </h1>
+    <div className="min-h-screen bg-slate-50 py-8">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8">
+        <PageHeader
+          title="Gestion des Signalements"
+          description="Traitez les signalements et gérez les statuts"
+        />
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-8">
-          <Card className="lg:col-span-3">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          <Card className="lg:col-span-3 shadow-sm border border-slate-200">
             <CardHeader>
               <CardTitle>Filtres</CardTitle>
             </CardHeader>
@@ -142,7 +131,7 @@ const ReportsPage: React.FC = () => {
           </Card>
         </div>
 
-        <Card>
+        <Card className="shadow-sm border border-slate-200">
           <CardHeader>
             <CardTitle>Signalements</CardTitle>
           </CardHeader>
@@ -187,14 +176,13 @@ const ReportsPage: React.FC = () => {
                       <TableCell className="max-w-xs truncate" title={report.raison}>
                         {report.raison}
                       </TableCell>
-                      <TableCell>User {report.reporterId}</TableCell>
                       <TableCell>
-                        <Badge className={getStatusBadgeColor(report.status)}>
-                          {report.status === 'OUVERT' && '🔴 Ouvert'}
-                          {report.status === 'EN_COURS' && '🟠 En cours'}
-                          {report.status === 'RESOLU' && '🟢 Résolu'}
-                          {report.status === 'REJETE' && '⚫ Rejeté'}
-                        </Badge>
+                        {report.author?.profile
+                          ? `${report.author.profile.firstName} ${report.author.profile.lastName}`
+                          : report.author?.email || 'Inconnu'}
+                      </TableCell>
+                      <TableCell>
+                        <StatusBadge status={report.status} type="report" />
                       </TableCell>
                       <TableCell>
                         {new Date(report.createdAt).toLocaleDateString('fr-FR', {

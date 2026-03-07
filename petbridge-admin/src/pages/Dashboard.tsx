@@ -14,7 +14,6 @@ import {
   CardHeader,
   CardTitle,
 } from '../components/ui/card';
-import { Badge } from '../components/ui/badge';
 import { Button } from '../components/ui/button';
 import {
   Dialog,
@@ -30,6 +29,9 @@ import { Skeleton } from '../components/ui/skeleton';
 import { useAnimals } from '../hooks/useAnimals';
 import { useReports } from '../hooks/useReports';
 import { useAdoptions } from '../hooks/useAdoptions';
+import { StatCard } from '../components/ui/StatCard';
+import { StatusBadge } from '../components/ui/StatusBadge';
+import { PageHeader } from '../components/ui/PageHeader';
 
 const DashboardPage: React.FC = () => {
   const [rejectReason, setRejectReason] = useState<string>('');
@@ -71,127 +73,59 @@ const DashboardPage: React.FC = () => {
     }
   };
 
-  const getStatusBadgeColor = (status: string) => {
-    switch (status) {
-      case 'OUVERT':
-        return 'bg-red-100 text-red-800 hover:bg-red-200';
-      case 'EN_COURS':
-        return 'bg-orange-100 text-orange-800 hover:bg-orange-200';
-      case 'RESOLU':
-        return 'bg-green-100 text-green-800 hover:bg-green-200';
-      case 'REJETE':
-        return 'bg-gray-100 text-gray-800 hover:bg-gray-200';
-      default:
-        return 'bg-gray-100 text-gray-800 hover:bg-gray-200';
-    }
-  };
-
   return (
-    <div className="min-h-screen bg-gray-100 py-8">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <h1 className="text-3xl font-bold text-gray-900 mb-8">Tableau de bord</h1>
+    <div className="min-h-screen bg-slate-50 py-8">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8">
 
-        {/* Statistics Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-          {/* Available Animals */}
-          <Card className="border-l-4 border-blue-500">
-            <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-sm font-medium text-gray-500">
-                Animaux disponibles
-              </CardTitle>
-              <div className="text-2xl">🐾</div>
-            </CardHeader>
-            <CardContent>
-              {animalsLoading ? (
-                <Skeleton className="h-8 w-16" />
-              ) : (
-                <div className="text-2xl font-bold text-gray-900">
-                  {availableAnimalsCount}
-                </div>
-              )}
-            </CardContent>
-          </Card>
+      {/* Statistics Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        {/* Available Animals */}
+        <StatCard
+          title="Animaux disponibles"
+          value={animalsLoading ? <Skeleton className="h-8 w-16" /> : availableAnimalsCount}
+          icon={<div className="text-2xl">🐾</div>}
+          color="blue"
+        />
 
-          {/* Accepted Adoptions */}
-          <Card className="border-l-4 border-green-500">
-            <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-sm font-medium text-gray-500">
-                Adoptions acceptées
-              </CardTitle>
-              <div className="text-2xl">🏠</div>
-            </CardHeader>
-            <CardContent>
-              {adoptionsLoading ? (
-                <Skeleton className="h-8 w-16" />
-              ) : (
-                <div className="text-2xl font-bold text-gray-900">
-                  {acceptedAdoptionsCount}
-                </div>
-              )}
-            </CardContent>
-          </Card>
+        {/* Accepted Adoptions */}
+        <StatCard
+          title="Adoptions acceptées"
+          value={adoptionsLoading ? <Skeleton className="h-8 w-16" /> : acceptedAdoptionsCount}
+          icon={<div className="text-2xl">🏠</div>}
+          color="green"
+        />
 
-          {/* Pending Validation */}
-          <Card className="border-l-4 border-orange-500 relative">
-            <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-sm font-medium text-gray-500">
-                En attente de validation
-              </CardTitle>
-              <div className="text-2xl">⏳</div>
-            </CardHeader>
-            <CardContent>
-              {animalsLoading ? (
-                <Skeleton className="h-8 w-16" />
-              ) : (
-                <div className="text-2xl font-bold text-gray-900">
-                  {pendingAnimalsCount}
-                </div>
-              )}
-            </CardContent>
-            {pendingAnimalsCount > 0 && (
-              <div className="absolute top-2 right-2 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs font-bold">
-                !
-              </div>
-            )}
-          </Card>
+        {/* Pending Validation */}
+        <StatCard
+          title="En attente de validation"
+          value={animalsLoading ? <Skeleton className="h-8 w-16" /> : pendingAnimalsCount}
+          icon={<div className="text-2xl">⏳</div>}
+          color="orange"
+          alert={pendingAnimalsCount > 0}
+        />
 
-          {/* Open Reports */}
-          <Card className="border-l-4 border-red-500 relative">
-            <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-sm font-medium text-gray-500">
-                Signalements ouverts
-              </CardTitle>
-              <div className="text-2xl">🚨</div>
-            </CardHeader>
-            <CardContent>
-              {reportsLoading ? (
-                <Skeleton className="h-8 w-16" />
-              ) : (
-                <div className="text-2xl font-bold text-gray-900">
-                  {openReportsCount}
-                </div>
-              )}
-            </CardContent>
-            {openReportsCount > 0 && (
-              <div className="absolute top-2 right-2 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs font-bold">
-                !
-              </div>
-            )}
-          </Card>
-        </div>
+        {/* Open Reports */}
+        <StatCard
+          title="Signalements ouverts"
+          value={reportsLoading ? <Skeleton className="h-8 w-16" /> : openReportsCount}
+          icon={<div className="text-2xl">🚨</div>}
+          color="red"
+          alert={openReportsCount > 0}
+        />
+      </div>
 
-        {/* Pending Animals Table */}
-        <Card className="mb-8">
-          <CardHeader className="flex flex-row items-center justify-between">
-            <CardTitle>Animaux en attente de validation</CardTitle>
-            {pendingAnimalsCount > 0 && (
-              <Link to="/animals">
-                <Button variant="secondary" size="sm">
-                  Voir tout
-                </Button>
-              </Link>
-            )}
-          </CardHeader>
+      {/* Pending Animals Table */}
+      <Card className="shadow-sm border border-slate-200">
+        <CardHeader className="flex flex-row items-center justify-between">
+          <CardTitle>Animaux en attente de validation</CardTitle>
+          {pendingAnimalsCount > 0 && (
+            <Link to="/animals">
+              <Button variant="secondary" size="sm">
+                Voir tout
+              </Button>
+            </Link>
+          )}
+        </CardHeader>
           <CardContent>
             {animalsLoading ? (
               <div className="space-y-4">
@@ -257,7 +191,7 @@ const DashboardPage: React.FC = () => {
         </Card>
 
         {/* Recent Reports Table */}
-        <Card>
+        <Card className="shadow-sm border border-slate-200">
           <CardHeader className="flex flex-row items-center justify-between">
             <CardTitle>Signalements récents</CardTitle>
             {reports?.length > 0 && (
@@ -298,19 +232,13 @@ const DashboardPage: React.FC = () => {
                   {recentReports.map((report: any) => (
                     <TableRow key={report.id}>
                       <TableCell>
-                        <Badge
-                          className={
-                            report.cible === 'UTILISATEUR'
-                              ? 'bg-blue-100 text-blue-800 hover:bg-blue-200'
-                              : report.cible === 'ANIMAL'
-                              ? 'bg-purple-100 text-purple-800 hover:bg-purple-200'
-                              : 'bg-indigo-100 text-indigo-800 hover:bg-indigo-200'
-                          }
-                        >
-                          {report.cible === 'UTILISATEUR' && '👤 Utilisateur'}
-                          {report.cible === 'ANIMAL' && '🐾 Animal'}
-                          {report.cible === 'MESSAGE' && '💬 Message'}
-                        </Badge>
+                        <div className="flex items-center">
+                          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-slate-100 text-slate-800">
+                            {report.cible === 'UTILISATEUR' && '👤 Utilisateur'}
+                            {report.cible === 'ANIMAL' && '🐾 Animal'}
+                            {report.cible === 'MESSAGE' && '💬 Message'}
+                          </span>
+                        </div>
                       </TableCell>
                       <TableCell className="max-w-xs truncate" title={report.raison}>
                         {report.raison}
@@ -325,12 +253,7 @@ const DashboardPage: React.FC = () => {
                         })}
                       </TableCell>
                       <TableCell>
-                        <Badge className={getStatusBadgeColor(report.status)}>
-                          {report.status === 'OUVERT' && '🔴 Ouvert'}
-                          {report.status === 'EN_COURS' && '🟠 En cours'}
-                          {report.status === 'RESOLU' && '🟢 Résolu'}
-                          {report.status === 'REJETE' && '⚫ Rejeté'}
-                        </Badge>
+                        <StatusBadge status={report.status} type="report" />
                       </TableCell>
                     </TableRow>
                   ))}

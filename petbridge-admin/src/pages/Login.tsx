@@ -31,23 +31,25 @@ const Login: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
-      <Card className="w-full max-w-md">
+    <div className="min-h-screen bg-gradient-to-br from-slate-900 to-slate-700 flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
+      <Card className="w-full max-w-md shadow-2xl">
         <CardHeader className="text-center">
-          <div className="flex justify-center mb-4">
-            <div className="w-12 h-12 bg-blue-600 rounded-lg flex items-center justify-center">
-              <PawPrint className="w-6 h-6 text-white" />
+          <div className="flex flex-col items-center mb-6">
+            <div className="w-20 h-20 bg-blue-600 rounded-xl flex items-center justify-center mb-4">
+              <PawPrint className="w-10 h-10 text-white" />
+            </div>
+            <div>
+              <CardTitle className="text-3xl">PetBridge</CardTitle>
+              <CardDescription className="text-slate-400">
+                Plateforme d'administration
+              </CardDescription>
             </div>
           </div>
-          <CardTitle className="text-2xl">Se connecter</CardTitle>
-          <CardDescription>
-            Connectez-vous à votre compte admin pour accéder à PetBridge
-          </CardDescription>
         </CardHeader>
         <CardContent>
-          <form onSubmit={handleSubmit} className="space-y-4">
+          <form onSubmit={handleSubmit} className="space-y-6">
             <div className="space-y-2">
-              <Label htmlFor="email">Email</Label>
+              <Label htmlFor="email" className="text-slate-200">Email</Label>
               <Input
                 id="email"
                 type="email"
@@ -55,10 +57,11 @@ const Login: React.FC = () => {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
+                className="bg-slate-800 border-slate-700 text-white placeholder-slate-400"
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="password">Mot de passe</Label>
+              <Label htmlFor="password" className="text-slate-200">Mot de passe</Label>
               <Input
                 id="password"
                 type="password"
@@ -66,12 +69,13 @@ const Login: React.FC = () => {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required
+                className="bg-slate-800 border-slate-700 text-white placeholder-slate-400"
               />
             </div>
             {error && (
               <div className="text-sm text-red-500 text-center">{error}</div>
             )}
-            <Button type="submit" className="w-full" disabled={loading}>
+            <Button type="submit" className="w-full bg-blue-600 hover:bg-blue-700 text-white" disabled={loading}>
               {loading ? 'Connexion en cours...' : 'Se connecter'}
             </Button>
           </form>

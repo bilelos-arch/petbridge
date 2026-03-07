@@ -13,7 +13,6 @@ import {
   CardHeader,
   CardTitle,
 } from '../components/ui/card';
-import { Badge } from '../components/ui/badge';
 import { Button } from '../components/ui/button';
 import {
   Dialog,
@@ -26,6 +25,8 @@ import { Label } from '../components/ui/label';
 import { Select } from '../components/ui/select';
 import { Skeleton } from '../components/ui/skeleton';
 import { useAdminAdoptions, type AdoptionStatus, type Adoption } from '../hooks/useAdminAdoptions';
+import { PageHeader } from '../components/ui/PageHeader';
+import { StatusBadge } from '../components/ui/StatusBadge';
 
 const AdoptionsPage: React.FC = () => {
   const [statusFilter, setStatusFilter] = useState<string>('');
@@ -46,41 +47,6 @@ const AdoptionsPage: React.FC = () => {
     setSelectedAdoption(adoption);
   };
 
-  const getStatusLabel = (status: AdoptionStatus) => {
-    switch (status) {
-      case 'EN_ATTENTE':
-        return '⏳ En attente';
-      case 'ACCEPTEE':
-        return '✅ Acceptée';
-      case 'REJETEE':
-      case 'REFUSEE':
-        return '❌ Rejetée';
-      case 'ANNULEE':
-        return '🚫 Annulée';
-      case 'COMPLETEE':
-        return '🏠 Complétée';
-      default:
-        return status;
-    }
-  };
-
-  const getStatusBadgeColor = (status: AdoptionStatus) => {
-    switch (status) {
-      case 'EN_ATTENTE':
-        return 'bg-yellow-100 text-yellow-800 hover:bg-yellow-200';
-      case 'ACCEPTEE':
-        return 'bg-green-100 text-green-800 hover:bg-green-200';
-      case 'REJETEE':
-      case 'REFUSEE':
-        return 'bg-red-100 text-red-800 hover:bg-red-200';
-      case 'ANNULEE':
-        return 'bg-gray-100 text-gray-800 hover:bg-gray-200';
-      case 'COMPLETEE':
-        return 'bg-blue-100 text-blue-800 hover:bg-blue-200';
-      default:
-        return 'bg-gray-100 text-gray-800 hover:bg-gray-200';
-    }
-  };
 
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString('fr-FR', {
@@ -95,14 +61,15 @@ const AdoptionsPage: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-100 py-8">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <h1 className="text-3xl font-bold text-gray-900 mb-8">
-          Gestion des Adoptions
-        </h1>
+    <div className="min-h-screen bg-slate-50 py-8">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8">
+        <PageHeader
+          title="Gestion des Adoptions"
+          description="Gérez les demandes d'adoption et leurs statuts"
+        />
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-8">
-          <Card className="lg:col-span-3">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          <Card className="lg:col-span-3 shadow-sm border border-slate-200">
             <CardHeader>
               <CardTitle>Filtres</CardTitle>
             </CardHeader>
@@ -136,7 +103,7 @@ const AdoptionsPage: React.FC = () => {
           </Card>
         </div>
 
-        <Card>
+        <Card className="shadow-sm border border-slate-200">
           <CardHeader>
             <CardTitle>Adoptions</CardTitle>
           </CardHeader>
@@ -221,9 +188,7 @@ const AdoptionsPage: React.FC = () => {
                             {adoption.message || 'Aucun message'}
                           </TableCell>
                           <TableCell>
-                            <Badge className={getStatusBadgeColor(adoption.status)}>
-                              {getStatusLabel(adoption.status)}
-                            </Badge>
+                            <StatusBadge status={adoption.status} type="adoption" />
                           </TableCell>
                           <TableCell>
                             {formatDate(adoption.createdAt)}
@@ -307,9 +272,7 @@ const AdoptionsPage: React.FC = () => {
                   <div>
                     <Label>Statut</Label>
                     <div className="mt-1">
-                      <Badge className={getStatusBadgeColor(selectedAdoption.status)}>
-                        {getStatusLabel(selectedAdoption.status)}
-                      </Badge>
+                      <StatusBadge status={selectedAdoption.status} type="adoption" />
                     </div>
                   </div>
                 </div>

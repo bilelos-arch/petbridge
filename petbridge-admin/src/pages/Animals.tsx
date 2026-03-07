@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { Card, CardContent } from '../components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../components/ui/table';
-import { Badge } from '../components/ui/badge';
+import { StatusBadge } from '../components/ui/StatusBadge';
 import { Button } from '../components/ui/button';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '../components/ui/dialog';
 import { Input } from '../components/ui/input';
@@ -11,6 +11,7 @@ import { Select } from '../components/ui/select';
 import { Textarea } from '../components/ui/textarea';
 import { useAdminAnimals, type AnimalStatus } from '../hooks/useAdminAnimals';
 import { Toaster, toast } from 'sonner';
+import { PageHeader } from '../components/ui/PageHeader';
 
 const Animals: React.FC = () => {
   const [status, setStatus] = useState<AnimalStatus | ''>('');
@@ -91,37 +92,6 @@ const Animals: React.FC = () => {
     return date.toLocaleDateString('fr-FR');
   };
 
-  // Get status badge color
-  const getStatusBadgeColor = (status: AnimalStatus) => {
-    switch (status) {
-      case 'ATTENTE_VALIDATION':
-        return 'bg-yellow-100 text-yellow-800';
-      case 'DISPONIBLE':
-        return 'bg-green-100 text-green-800';
-      case 'ADOPTE':
-        return 'bg-blue-100 text-blue-800';
-      case 'REJETE':
-        return 'bg-red-100 text-red-800';
-      default:
-        return 'bg-gray-100 text-gray-800';
-    }
-  };
-
-  // Get status label
-  const getStatusLabel = (status: AnimalStatus) => {
-    switch (status) {
-      case 'ATTENTE_VALIDATION':
-        return '⏳ En attente de validation';
-      case 'DISPONIBLE':
-        return '✅ Disponible';
-      case 'ADOPTE':
-        return '🏠 Adopté';
-      case 'REJETE':
-        return '❌ Rejeté';
-      default:
-        return status;
-    }
-  };
 
   // Get species label
   const getSpeciesLabel = (species: string) => {
@@ -138,14 +108,21 @@ const Animals: React.FC = () => {
   };
 
   return (
-    <div className="space-y-6">
-      <Toaster />
-      
-      <h1 className="text-2xl font-bold">Gestion des Animaux</h1>
+    <div className="min-h-screen bg-slate-50 py-8">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <Toaster />
+        
+        <PageHeader
+          title="Gestion des Animaux"
+          description="Gérez les annonces d'animaux, approuvez ou rejetez les demandes"
+        />
 
-      {/* Filters Bar */}
-      <Card>
-        <CardContent className="p-4">
+        {/* Filters Bar */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Filtres</CardTitle>
+          </CardHeader>
+          <CardContent className="p-4">
           <div className="flex flex-col md:flex-row gap-4 items-end">
             {/* Status Filter */}
             <div className="flex-1 min-w-[200px]">
@@ -187,6 +164,9 @@ const Animals: React.FC = () => {
 
       {/* Animals Table */}
       <Card>
+        <CardHeader>
+          <CardTitle>Animaux</CardTitle>
+        </CardHeader>
         <CardContent className="p-4">
           {isLoading ? (
             <div className="space-y-4">
@@ -259,9 +239,7 @@ const Animals: React.FC = () => {
                         </TableCell>
                         <TableCell>{ownerName}</TableCell>
                         <TableCell>
-                          <Badge className={getStatusBadgeColor(animal.status)}>
-                            {getStatusLabel(animal.status)}
-                          </Badge>
+                          <StatusBadge status={animal.status} type="animal" />
                         </TableCell>
                         <TableCell>{formatDate(animal.createdAt)}</TableCell>
                         <TableCell className="flex gap-2">
@@ -356,6 +334,7 @@ const Animals: React.FC = () => {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+      </div>
     </div>
   );
 };
