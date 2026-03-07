@@ -1,14 +1,26 @@
-import { Controller, Post, Get, Patch, Param, Body, UseGuards } from '@nestjs/common';
+import { Controller, Post, Get, Patch, Param, Body, UseGuards, Query } from '@nestjs/common';
 import { AdoptionsService } from './adoptions.service';
 import { CreateAdoptionDto } from './dto/create-adoption.dto';
 import { RejectAdoptionDto } from './dto/reject-adoption.dto';
+import { AdoptionFiltersDto } from './dto/adoption-filters.dto';
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { Roles } from '../animals/decorators/roles.decorator';
+import { Role } from '@prisma/client';
 
 @Controller('adoptions')
 @UseGuards(JwtAuthGuard)
 export class AdoptionsController {
   constructor(private readonly adoptionsService: AdoptionsService) {}
+
+  /**
+   * Get all adoption requests (admin only)
+   */
+  @Get()
+  @Roles(Role.ADMIN)
+  async getAllAdoptions(@Query() filters: AdoptionFiltersDto) {
+    return this.adoptionsService.getAllAdoptions(filters);
+  }
 
   /**
    * Create a new adoption request

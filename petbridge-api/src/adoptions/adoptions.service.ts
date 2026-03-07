@@ -1,11 +1,91 @@
 import { Injectable, NotFoundException, ForbiddenException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateAdoptionDto } from './dto/create-adoption.dto';
+import { AdoptionFiltersDto } from './dto/adoption-filters.dto';
 import { AdoptionStatus, AnimalStatus } from '@prisma/client';
 
 @Injectable()
 export class AdoptionsService {
   constructor(private readonly prisma: PrismaService) {}
+
+  /**
+   * Get all adoption requests for admin
+   */
+  async getAllAdoptions(filters: AdoptionFiltersDto) {
+    const { status, animalId, adopterId, page = 1, limit = 10 } = filters;
+    const skip = (page - 1) * limit;
+
+    const where = {} as any;
+    if (status) {
+      where.status = status;
+    }
+    if (animalId) {
+      where.animalId = animalId;
+    }
+    if (adopterId) {
+      where.adopterId = adopterId;
+    }
+
+    const [data, total] = await Promise.all([
+      this.prisma.adoptionRequest.findMany({
+        where,
+        orderBy: { createdAt: 'desc' },
+        skip,
+        take: limit,
+        include: {
+          animal: {
+            select: {
+              id: true,
+              name: true,
+              photos: {
+                select: {
+                  id: true,
+                  url: true,
+                  isPrimary: true,
+                },
+                take: 1,
+              },
+            },
+          },
+          adopter: {
+            select: {
+              id: true,
+              email: true,
+              profile: {
+                select: {
+                  firstName: true,
+                  lastName: true,
+                  avatarUrl: true,
+                },
+              },
+            },
+          },
+          donneur: {
+            select: {
+              id: true,
+              email: true,
+              profile: {
+                select: {
+                  firstName: true,
+                  lastName: true,
+                  avatarUrl: true,
+                },
+              },
+            },
+          },
+        },
+      }),
+      this.prisma.adoptionRequest.count({ where }),
+    ]);
+
+    return {
+      data,
+      total,
+      page,
+      limit,
+      totalPages: Math.ceil(total / limit),
+    };
+  }
 
   /**
    * Create a new adoption request
