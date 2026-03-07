@@ -1,0 +1,11 @@
+import { Module } from '@nestjs/common';
+import { CheckInsController } from './checkins.controller';
+import { CheckInsService } from './checkins.service';
+import { PrismaModule } from '../prisma/prisma.module';
+
+@Module({
+  imports: [PrismaModule],
+  controllers: [CheckInsController],
+  providers: [CheckInsService],
+})
+export class CheckInsModule {}
