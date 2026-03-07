@@ -4,23 +4,65 @@ import api from '../lib/axios'
 // Types for Adoption data
 export interface Adoption {
   id: string
-  status: 'PENDING' | 'ACCEPTED' | 'REJECTED' | 'CANCELLED'
+  status: 'EN_ATTENTE' | 'ACCEPTEE' | 'REFUSEE' | 'ANNULEE' | 'COMPLETEE'
   message: string
   createdAt: Date
   updatedAt: Date
   adopterId: string
   animalId: string
   rejectedReason?: string
+  animal?: {
+    id: string
+    name: string
+    photos?: Array<{
+      id: string
+      url: string
+      isPrimary: boolean
+    }>
+  }
+  adopter?: {
+    id: string
+    email: string
+    profile?: {
+      firstName: string
+      lastName: string
+      avatarUrl?: string
+    }
+  }
+  donneur?: {
+    id: string
+    email: string
+    profile?: {
+      firstName: string
+      lastName: string
+      avatarUrl?: string
+    }
+  }
 }
 
-// Hook for fetching all adoption requests
-export const useAdoptions = () => {
-  return useQuery<Adoption[]>({
-    queryKey: ['adoptions'],
+// Types for paginated response
+export interface PaginatedResponse<T> {
+  data: T[]
+  total: number
+  page: number
+  limit: number
+  totalPages: number
+}
+
+// Hook for fetching all adoption requests with filters and pagination
+export const useAdoptions = (params: {
+  status?: string
+  animalId?: string
+  adopterId?: string
+  page?: number
+  limit?: number
+} = {}) => {
+  return useQuery<PaginatedResponse<Adoption>>({
+    queryKey: ['adoptions', params],
     queryFn: async () => {
-      // Note: You might need to implement a specific admin endpoint for all adoptions
-      // For now, this assumes you have an endpoint that returns all adoption requests
-      const response = await api.get('/adoptions')
+      const response = await api.get('/adoptions', {
+        params,
+      })
       return response.data
     },
   })
