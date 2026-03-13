@@ -232,15 +232,29 @@ export class AdoptionsService {
         adopter: {
           select: {
             id: true,
+            email: true,
             profile: {
               select: {
                 firstName: true,
                 lastName: true,
                 avatarUrl: true,
+                phone: true,
+                city: true,
+                housingType: true,
+                surfaceArea: true,
+                hasGarden: true,
+                hasChildren: true,
+                childrenAges: true,
+                hasOtherPets: true,
+                otherPetsDesc: true,
+                hoursAbsent: true,
+                hasPetExperience: true,
+                petExpDesc: true,
               },
             },
           },
         },
+        thread: true,
       },
     });
   }
@@ -252,6 +266,7 @@ export class AdoptionsService {
     const request = await this.prisma.adoptionRequest.findUnique({
       where: { id },
       include: {
+        thread: true,
         animal: {
           select: {
             id: true,
@@ -368,242 +383,183 @@ export class AdoptionsService {
         },
       },
     });
- }
+  }
 
- /**
-  * Accept an adoption request
-  */
- async acceptAdoptionRequest(id: string, donneurId: string) {
-   // Get adoption request details
-   const request = await this.prisma.adoptionRequest.findUnique({
-     where: { id },
-     select: {
-       id: true,
-       donneurId: true,
-       status: true,
-       animalId: true,
-     },
-   });
+  /**
+   * Accept an adoption request
+   */
+  async acceptAdoptionRequest(id: string, donneurId: string) {
+    // Get adoption request details
+    const request = await this.prisma.adoptionRequest.findUnique({
+      where: { id },
+      select: {
+        id: true,
+        donneurId: true,
+        status: true,
+        animalId: true,
+      },
+    });
 
-   if (!request) {
-     throw new NotFoundException('Adoption request not found');
-   }
+    if (!request) {
+      throw new NotFoundException('Adoption request not found');
+    }
 
-   // Verify currentUser is the donneur
-   if (request.donneurId !== donneurId) {
-     throw new ForbiddenException('You do not have permission to accept this request');
-   }
+    // Verify currentUser is the donneur
+    if (request.donneurId !== donneurId) {
+      throw new ForbiddenException('You do not have permission to accept this request');
+    }
 
-   // Verify request is in EN_ATTENTE status
-   if (request.status !== AdoptionStatus.EN_ATTENTE) {
-     throw new ForbiddenException('Only pending requests can be accepted');
-   }
+    // Verify request is in EN_ATTENTE status
+    if (request.status !== AdoptionStatus.EN_ATTENTE) {
+      throw new ForbiddenException('Only pending requests can be accepted');
+    }
 
-   // Execute all operations in a single transaction
-   return this.prisma.$transaction(async (prisma) => {
-     // Step 1: Update adoption request to ACCEPTEE with decidedAt
-     const updatedRequest = await prisma.adoptionRequest.update({
-       where: { id },
-       data: {
-         status: AdoptionStatus.ACCEPTEE,
-         decidedAt: new Date(),
-       },
-       include: {
-         thread: true,
-         animal: {
-           select: {
-             id: true,
-             name: true,
-             species: true,
-             photos: {
-               select: {
-                 id: true,
-                 url: true,
-                 isPrimary: true,
-               },
-               take: 1,
-             },
-           },
-         },
-         adopter: {
-           select: {
-             id: true,
-             profile: {
-               select: {
-                 firstName: true,
-                 lastName: true,
-                 avatarUrl: true,
-               },
-             },
-           },
-         },
-         donneur: {
-           select: {
-             id: true,
-             profile: {
-               select: {
-                 firstName: true,
-                 lastName: true,
-                 avatarUrl: true,
-               },
-             },
-           },
-         },
-       },
-     });
+    // Step 1: Update adoption request to ACCEPTEE
+    await this.prisma.adoptionRequest.update({
+      where: { id },
+      data: {
+        status: AdoptionStatus.ACCEPTEE,
+        decidedAt: new Date(),
+      },
+    });
 
-     // Step 2: Create a new Thread with adoptionId
-     await prisma.thread.create({
-       data: {
-         adoptionId: id,
-       },
-     });
+    // Step 2: Create Thread
+    await this.prisma.thread.create({
+      data: { adoptionId: id },
+    });
 
-     // Step 3: Reject all other EN_ATTENTE requests for the same animal
-     await prisma.adoptionRequest.updateMany({
-       where: {
-         animalId: request.animalId,
-         id: { not: id },
-         status: AdoptionStatus.EN_ATTENTE,
-       },
-       data: {
-         status: AdoptionStatus.REFUSEE,
-         decidedAt: new Date(),
-       },
-     });
+    // Step 3: Reject all other EN_ATTENTE requests for same animal
+    await this.prisma.adoptionRequest.updateMany({
+      where: {
+        animalId: request.animalId,
+        id: { not: id },
+        status: AdoptionStatus.EN_ATTENTE,
+      },
+      data: {
+        status: AdoptionStatus.REFUSEE,
+        decidedAt: new Date(),
+      },
+    });
 
-     // Step 4: Update animal status to ADOPTE
-     await prisma.animal.update({
-       where: { id: request.animalId },
-       data: { status: AnimalStatus.ADOPTE },
-     });
+    // Step 4: Update animal status to ADOPTE
+    await this.prisma.animal.update({
+      where: { id: request.animalId },
+      data: { status: AnimalStatus.ADOPTE },
+    });
 
-     // Return updated request with thread included
-     return await prisma.adoptionRequest.findUnique({
-       where: { id },
-       include: {
-         thread: true,
-         animal: {
-           select: {
-             id: true,
-             name: true,
-             species: true,
-             photos: {
-               select: {
-                 id: true,
-                 url: true,
-                 isPrimary: true,
-               },
-               take: 1,
-             },
-           },
-         },
-         adopter: {
-           select: {
-             id: true,
-             profile: {
-               select: {
-                 firstName: true,
-                 lastName: true,
-                 avatarUrl: true,
-               },
-             },
-           },
-         },
-         donneur: {
-           select: {
-             id: true,
-             profile: {
-               select: {
-                 firstName: true,
-                 lastName: true,
-                 avatarUrl: true,
-               },
-             },
-           },
-         },
-       },
-     });
-   });
- }
+    // Return final result
+    return this.prisma.adoptionRequest.findUnique({
+      where: { id },
+      include: {
+        thread: true,
+        animal: {
+          select: {
+            id: true,
+            name: true,
+            species: true,
+            photos: {
+              select: { id: true, url: true, isPrimary: true },
+              take: 1,
+            },
+          },
+        },
+        adopter: {
+          select: {
+            id: true,
+            profile: {
+              select: { firstName: true, lastName: true, avatarUrl: true },
+            },
+          },
+        },
+        donneur: {
+          select: {
+            id: true,
+            profile: {
+              select: { firstName: true, lastName: true, avatarUrl: true },
+            },
+          },
+        },
+      },
+    });
+  }
 
- /**
-  * Reject an adoption request
-  */
- async rejectAdoptionRequest(id: string, donneurId: string, dto: { decisionNote: string }) {
-   // Get adoption request details
-   const request = await this.prisma.adoptionRequest.findUnique({
-     where: { id },
-     select: {
-       id: true,
-       donneurId: true,
-       status: true,
-     },
-   });
+  /**
+   * Reject an adoption request
+   */
+  async rejectAdoptionRequest(id: string, donneurId: string, dto: { decisionNote: string }) {
+    // Get adoption request details
+    const request = await this.prisma.adoptionRequest.findUnique({
+      where: { id },
+      select: {
+        id: true,
+        donneurId: true,
+        status: true,
+      },
+    });
 
-   if (!request) {
-     throw new NotFoundException('Adoption request not found');
-   }
+    if (!request) {
+      throw new NotFoundException('Adoption request not found');
+    }
 
-   // Verify currentUser is the donneur
-   if (request.donneurId !== donneurId) {
-     throw new ForbiddenException('You do not have permission to reject this request');
-   }
+    // Verify currentUser is the donneur
+    if (request.donneurId !== donneurId) {
+      throw new ForbiddenException('You do not have permission to reject this request');
+    }
 
-   // Verify request is in EN_ATTENTE status
-   if (request.status !== AdoptionStatus.EN_ATTENTE) {
-     throw new ForbiddenException('Only pending requests can be rejected');
-   }
+    // Verify request is in EN_ATTENTE status
+    if (request.status !== AdoptionStatus.EN_ATTENTE) {
+      throw new ForbiddenException('Only pending requests can be rejected');
+    }
 
-   // Update the adoption request
-   return this.prisma.adoptionRequest.update({
-     where: { id },
-     data: {
-       status: AdoptionStatus.REFUSEE,
-       decisionNote: dto.decisionNote,
-       decidedAt: new Date(),
-     },
-     include: {
-       animal: {
-         select: {
-           id: true,
-           name: true,
-           species: true,
-           photos: {
-             select: {
-               id: true,
-               url: true,
-               isPrimary: true,
-             },
-             take: 1,
-           },
-         },
-       },
-       adopter: {
-         select: {
-           id: true,
-           profile: {
-             select: {
-               firstName: true,
-               lastName: true,
-               avatarUrl: true,
-             },
-           },
-         },
-       },
-       donneur: {
-         select: {
-           id: true,
-           profile: {
-             select: {
-               firstName: true,
-               lastName: true,
-               avatarUrl: true,
-             },
-           },
-         },
-       },
-     },
-   });
- }
+    // Update the adoption request
+    return this.prisma.adoptionRequest.update({
+      where: { id },
+      data: {
+        status: AdoptionStatus.REFUSEE,
+        decisionNote: dto.decisionNote,
+        decidedAt: new Date(),
+      },
+      include: {
+        animal: {
+          select: {
+            id: true,
+            name: true,
+            species: true,
+            photos: {
+              select: {
+                id: true,
+                url: true,
+                isPrimary: true,
+              },
+              take: 1,
+            },
+          },
+        },
+        adopter: {
+          select: {
+            id: true,
+            profile: {
+              select: {
+                firstName: true,
+                lastName: true,
+                avatarUrl: true,
+              },
+            },
+          },
+        },
+        donneur: {
+          select: {
+            id: true,
+            profile: {
+              select: {
+                firstName: true,
+                lastName: true,
+                avatarUrl: true,
+              },
+            },
+          },
+        },
+      },
+    });
+  }
 }
