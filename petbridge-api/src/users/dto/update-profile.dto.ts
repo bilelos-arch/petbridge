@@ -7,7 +7,7 @@ import {
     IsArray,
     ValidateIf
 } from 'class-validator';
-import { HousingType } from '@prisma/client';
+import { HousingType, Species, Size } from '@prisma/client';
 
 export class UpdateProfileDto {
     @IsString()
@@ -60,4 +60,14 @@ export class UpdateProfileDto {
     @IsOptional()
     @IsString()
     avatarUrl?: string;
+
+    @IsOptional()
+    @IsArray()
+    @IsEnum(Species, { each: true })
+    preferredSpecies?: Species[];
+
+    @IsOptional()
+    @IsArray()
+    @IsEnum(Size, { each: true })
+    preferredSize?: Size[];
 }

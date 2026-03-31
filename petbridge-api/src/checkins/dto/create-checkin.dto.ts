@@ -1,4 +1,12 @@
 export class CreateCheckInDto {
-  note?: string;
+  message?: string;
+  scheduledFor?: Date;
   photoUrl?: string;
+  wellbeingScore?: number;
+}
+
+export class RespondCheckInDto {
+  responseNote?: string;
+  photoUrl?: string;
+  wellbeingScore?: number;
 }

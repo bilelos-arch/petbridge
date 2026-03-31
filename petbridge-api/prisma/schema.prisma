@@ -1,5 +1,3 @@
-// prisma/schema.prisma
-
 generator client {
   provider = "prisma-client-js"
 }
@@ -10,14 +8,259 @@ datasource db {
   directUrl = env("DIRECT_URL")
 }
 
-// ─────────────────────────────────────────
-// ENUMS
-// ─────────────────────────────────────────
+model User {
+  id                String            @id @default(uuid())
+  email             String            @unique
+  password          String?
+  roles             Role[]            @default([ADOPTANT])
+  isActive          Boolean           @default(true)
+  isBanned          Boolean           @default(false)
+  bannedAt          DateTime?
+  bannedReason      String?
+  expoPushToken     String?
+  createdAt         DateTime          @default(now())
+  updatedAt         DateTime          @updatedAt
+  adoptantRequests  AdoptionRequest[] @relation("AdoptantRequests")
+  donneurRequests   AdoptionRequest[] @relation("DonneurRequests")
+  animals           Animal[]          @relation("AnimalOwner")
+  checkInsRequested CheckIn[]         @relation("CheckInRequester")
+  checkInsResponded CheckIn[]         @relation("CheckInResponder")
+  sentMessages      Message[]
+  refreshTokens     RefreshToken[]
+  reports           Report[]          @relation("ReportAuteur")
+  sightingsReported Sighting[]        @relation("SightingReporter")
+  sightingsHandled  Sighting[]        @relation("SightingVolunteer")
+  profile           UserProfile?
+}
+
+model UserProfile {
+  id               String      @id @default(uuid())
+  userId           String      @unique
+  firstName        String
+  lastName         String
+  phone            String?
+  city             String
+  housingType      HousingType
+  surfaceArea      Int?
+  hasGarden        Boolean     @default(false)
+  hasChildren      Boolean     @default(false)
+  childrenAges     Int[]
+  hasOtherPets     Boolean     @default(false)
+  otherPetsDesc    String?
+  hoursAbsent      Int
+  hasPetExperience Boolean     @default(false)
+  petExpDesc       String?
+  avatarUrl        String?
+  createdAt        DateTime    @default(now())
+  updatedAt        DateTime    @updatedAt
+  preferredSize    Size[]
+  preferredSpecies Species[]
+  user             User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  warningBadge     Boolean  @default(false)
+  warningCount     Int      @default(0)
+  completionBadge  Boolean  @default(false)
+  saviorBadge      Boolean  @default(false)
+  saviorCount      Int      @default(0)
+  lastLatitude     Float?
+  lastLongitude    Float?
+  lastLocationAt   DateTime?
+}
+
+model RefreshToken {
+  id        String   @id @default(uuid())
+  userId    String
+  token     String   @unique
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Animal {
+  id                String            @id @default(uuid())
+  ownerId           String
+  originalOwnerId   String
+  name              String
+  species           Species
+  sex               Sex
+  size              Size
+  temperament       Temperament
+  age               Int?
+  description       String?
+  vaccinated        Boolean           @default(false)
+  spayed            Boolean           @default(false)
+  dewormed          Boolean           @default(false)
+  color             String?
+  birthDate         DateTime?
+  medicalConditions String?
+  status            AnimalStatus      @default(ATTENTE_VALIDATION)
+  rejectedReason    String?
+  publishedAt       DateTime?
+  createdAt         DateTime          @default(now())
+  updatedAt         DateTime          @updatedAt
+  breedId           String?
+  city              String?
+  activityLevel     ActivityLevel     @default(MOYEN)
+  goodWithKids      Boolean           @default(false)
+  goodWithPets      Boolean           @default(false)
+  adoptionRequests  AdoptionRequest[]
+  breed             Breed?            @relation(fields: [breedId], references: [id])
+  owner             User              @relation("AnimalOwner", fields: [ownerId], references: [id])
+  photos            AnimalPhoto[]
+  healthRecords     HealthRecord[]
+  reports           Report[]          @relation("ReportAnimal")
+}
+
+model Breed {
+  id          String   @id @default(cuid())
+  name        String
+  species     Species
+  description String?
+  imageUrl    String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  animals     Animal[]
+
+  @@unique([name, species])
+}
+
+model AnimalPhoto {
+  id        String   @id @default(uuid())
+  animalId  String
+  url       String
+  publicId  String?
+  isPrimary Boolean  @default(false)
+  createdAt DateTime @default(now())
+  animal    Animal   @relation(fields: [animalId], references: [id], onDelete: Cascade)
+}
+
+model HealthRecord {
+  id           String   @id @default(uuid())
+  animalId     String
+  title        String
+  description  String?
+  date         DateTime
+  veterinarian String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  animal       Animal   @relation(fields: [animalId], references: [id], onDelete: Cascade)
+}
+
+model AdoptionRequest {
+  id           String         @id @default(uuid())
+  animalId     String
+  adopterId    String
+  donneurId    String
+  status       AdoptionStatus @default(EN_ATTENTE)
+  message      String?
+  decisionNote String?
+  decidedAt    DateTime?
+  completedAt  DateTime?
+  createdAt    DateTime       @default(now())
+  updatedAt    DateTime       @updatedAt
+  adopter      User           @relation("AdoptantRequests", fields: [adopterId], references: [id])
+  animal       Animal         @relation(fields: [animalId], references: [id])
+  donneur      User           @relation("DonneurRequests", fields: [donneurId], references: [id])
+  checkIns     CheckIn[]
+  thread       Thread?
+}
+
+model Thread {
+  id             String          @id @default(uuid())
+  adoptionId     String          @unique
+  lastActivityAt DateTime        @default(now())
+  isActive       Boolean         @default(true)
+  createdAt      DateTime        @default(now())
+  messages       Message[]
+  adoption       AdoptionRequest @relation(fields: [adoptionId], references: [id])
+}
+
+model Message {
+  id        String   @id @default(uuid())
+  threadId  String
+  senderId  String
+  content   String
+  mediaUrl  String?
+  isRead    Boolean  @default(false)
+  createdAt DateTime @default(now())
+  sender    User     @relation(fields: [senderId], references: [id])
+  thread    Thread   @relation(fields: [threadId], references: [id], onDelete: Cascade)
+  reports   Report[] @relation("ReportMessage")
+}
+
+model CheckIn {
+  id             String          @id @default(uuid())
+  photoUrl       String?
+  createdAt      DateTime        @default(now())
+  adoptionId     String
+  message        String?
+  requestedById  String
+  respondedAt    DateTime?
+  respondedById  String?
+  responseNote   String?
+  scheduledFor   DateTime?
+  status         CheckInStatus   @default(EN_ATTENTE)
+  wellbeingScore Int?
+  adoption       AdoptionRequest @relation(fields: [adoptionId], references: [id], onDelete: Cascade)
+  requestedBy    User            @relation("CheckInRequester", fields: [requestedById], references: [id])
+  respondedBy    User?           @relation("CheckInResponder", fields: [respondedById], references: [id])
+  checkInNumber    Int      @default(0)
+  dueDate          DateTime?
+  isLate           Boolean  @default(false)
+}
+
+model Report {
+  id             String       @id @default(uuid())
+  authorId       String
+  cible          ReportCible
+  cibleUserId    String?
+  cibleAnimalId  String?
+  cibleMessageId String?
+  raison         String
+  status         ReportStatus @default(OUVERT)
+  adminNote      String?
+  resolvedAt     DateTime?
+  createdAt      DateTime     @default(now())
+  author         User         @relation("ReportAuteur", fields: [authorId], references: [id])
+  cibleAnimal    Animal?      @relation("ReportAnimal", fields: [cibleAnimalId], references: [id])
+  cibleMessage   Message?     @relation("ReportMessage", fields: [cibleMessageId], references: [id])
+}
+
+model Sighting {
+  id          String          @id @default(uuid())
+  reporterId  String
+  volunteerId String?
+  latitude    Float
+  longitude   Float
+  situation   AnimalSituation @default(INCONNU)
+  description String?
+  photoUrl    String?
+  status      SightingStatus  @default(SIGNALE)
+  resolvedAt  DateTime?
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
+  reporter    User            @relation("SightingReporter", fields: [reporterId], references: [id])
+  volunteer   User?           @relation("SightingVolunteer", fields: [volunteerId], references: [id])
+}
 
 enum Role {
   ADOPTANT
   DONNEUR
   ADMIN
+}
+
+enum SightingStatus {
+  SIGNALE
+  PRIS_EN_CHARGE
+  SECOURU
+  NON_TROUVE
+}
+
+enum AnimalSituation {
+  BLESSE
+  EN_BONNE_SANTE
+  AGRESSIF
+  AVEC_PETITS
+  INCONNU
 }
 
 enum Species {
@@ -37,6 +280,12 @@ enum Size {
   GRAND
 }
 
+enum ActivityLevel {
+  FAIBLE
+  MOYEN
+  ELEVE
+}
+
 enum Temperament {
   CALME
   ACTIF
@@ -53,6 +302,7 @@ enum HousingType {
 
 enum AnimalStatus {
   ATTENTE_VALIDATION
+  EN_COURS_ADOPTION
   DISPONIBLE
   ADOPTE
   REJETE
@@ -79,212 +329,7 @@ enum ReportCible {
   MESSAGE
 }
 
-// ─────────────────────────────────────────
-// USER
-// ─────────────────────────────────────────
-
-model User {
-  id            String    @id @default(uuid())
-  email         String    @unique
-  password      String?
-  roles         Role[]    @default([ADOPTANT])
-  isActive      Boolean   @default(true)
-  isBanned      Boolean   @default(false)
-  bannedAt      DateTime?
-  bannedReason  String?
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
-
-  profile          UserProfile?
-  animals          Animal[]            @relation("AnimalOwner")
-  refreshTokens    RefreshToken[]
-  sentMessages     Message[]
-  checkIns         CheckIn[]
-  adoptantRequests AdoptionRequest[]   @relation("AdoptantRequests")
-  donneurRequests  AdoptionRequest[]   @relation("DonneurRequests")
-  reports          Report[]            @relation("ReportAuteur")
-}
-
-model UserProfile {
-  id               String      @id @default(uuid())
-  userId           String      @unique
-  firstName        String
-  lastName         String
-  phone            String?
-  city             String
-  housingType      HousingType
-  surfaceArea      Int?
-  hasGarden        Boolean     @default(false)
-  hasChildren      Boolean     @default(false)
-  childrenAges     Int[]
-  hasOtherPets     Boolean     @default(false)
-  otherPetsDesc    String?
-  hoursAbsent      Int
-  hasPetExperience Boolean     @default(false)
-  petExpDesc       String?
-  avatarUrl        String?
-  createdAt        DateTime    @default(now())
-  updatedAt        DateTime    @updatedAt
-
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
-}
-
-model RefreshToken {
-  id        String   @id @default(uuid())
-  userId    String
-  token     String   @unique
-  expiresAt DateTime
-  createdAt DateTime @default(now())
-
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
-}
-
-// ─────────────────────────────────────────
-// ANIMAL
-// ─────────────────────────────────────────
-
-model Animal {
-  id                String       @id @default(uuid())
-  ownerId           String
-  originalOwnerId   String
-  name              String
-  species           Species
-  sex               Sex
-  size              Size
-  temperament       Temperament
-  age               Int?
-  description       String?
-  vaccinated        Boolean      @default(false)
-  spayed            Boolean      @default(false)
-  dewormed          Boolean      @default(false)
-  breed             String?
-  color             String?
-  birthDate         DateTime?
-  medicalConditions String?
-  status            AnimalStatus @default(ATTENTE_VALIDATION)
-  rejectedReason    String?
-  publishedAt       DateTime?
-  createdAt         DateTime     @default(now())
-  updatedAt         DateTime     @updatedAt
-
-  owner            User              @relation("AnimalOwner", fields: [ownerId], references: [id])
-  photos           AnimalPhoto[]
-  healthRecords    HealthRecord[]
-  adoptionRequests AdoptionRequest[]
-  reports          Report[]          @relation("ReportAnimal")
-}
-
-model AnimalPhoto {
-  id        String   @id @default(uuid())
-  animalId  String
-  url       String
-  publicId  String?
-  isPrimary Boolean  @default(false)
-  createdAt DateTime @default(now())
-
-  animal Animal @relation(fields: [animalId], references: [id], onDelete: Cascade)
-}
-
-model HealthRecord {
-  id           String   @id @default(uuid())
-  animalId     String
-  title        String
-  description  String?
-  date         DateTime
-  veterinarian String?
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
-
-  animal Animal @relation(fields: [animalId], references: [id], onDelete: Cascade)
-}
-
-// ─────────────────────────────────────────
-// ADOPTION
-// ─────────────────────────────────────────
-
-model AdoptionRequest {
-  id           String         @id @default(uuid())
-  animalId     String
-  adopterId    String
-  donneurId    String
-  status       AdoptionStatus @default(EN_ATTENTE)
-  message      String?
-  decisionNote String?
-  decidedAt    DateTime?
-  completedAt  DateTime?
-  createdAt    DateTime       @default(now())
-  updatedAt    DateTime       @updatedAt
-
-  animal   Animal  @relation(fields: [animalId], references: [id])
-  adopter  User    @relation("AdoptantRequests", fields: [adopterId], references: [id])
-  donneur  User    @relation("DonneurRequests", fields: [donneurId], references: [id])
-  thread   Thread?
-}
-
-// ─────────────────────────────────────────
-// MESSAGING
-// ─────────────────────────────────────────
-
-model Thread {
-  id             String   @id @default(uuid())
-  adoptionId     String   @unique
-  lastActivityAt DateTime @default(now())
-  isActive       Boolean  @default(true)
-  createdAt      DateTime @default(now())
-
-  adoption AdoptionRequest @relation(fields: [adoptionId], references: [id])
-  messages Message[]
-  checkIns CheckIn[]
-}
-
-model Message {
-  id        String   @id @default(uuid())
-  threadId  String
-  senderId  String
-  content   String
-  mediaUrl  String?
-  isRead    Boolean  @default(false)
-  createdAt DateTime @default(now())
-
-  thread   Thread   @relation(fields: [threadId], references: [id], onDelete: Cascade)
-  sender   User     @relation(fields: [senderId], references: [id])
-  reports  Report[] @relation("ReportMessage")
-}
-
-// ─────────────────────────────────────────
-// POST-ADOPTION
-// ─────────────────────────────────────────
-
-model CheckIn {
-  id        String   @id @default(uuid())
-  threadId  String
-  userId    String
-  note      String?
-  photoUrl  String?
-  createdAt DateTime @default(now())
-
-  thread Thread @relation(fields: [threadId], references: [id], onDelete: Cascade)
-  user   User   @relation(fields: [userId], references: [id])
-}
-
-// ─────────────────────────────────────────
-// MODERATION
-// ─────────────────────────────────────────
-
-model Report {
-  id             String       @id @default(uuid())
-  authorId       String
-  cible          ReportCible
-  cibleUserId    String?
-  cibleAnimalId  String?
-  cibleMessageId String?
-  raison         String
-  status         ReportStatus @default(OUVERT)
-  adminNote      String?
-  resolvedAt     DateTime?
-  createdAt      DateTime     @default(now())
-
-  author        User      @relation("ReportAuteur", fields: [authorId], references: [id])
-  cibleAnimal   Animal?   @relation("ReportAnimal", fields: [cibleAnimalId], references: [id])
-  cibleMessage  Message?  @relation("ReportMessage", fields: [cibleMessageId], references: [id])
+enum CheckInStatus {
+  EN_ATTENTE
+  COMPLETE
 }

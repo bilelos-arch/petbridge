@@ -234,7 +234,7 @@ const Animals: React.FC = () => {
                             {getSpeciesLabel(animal.species)}
                           </div>
                           {animal.breed && (
-                            <div className="text-xs text-gray-400">{animal.breed}</div>
+                            <div className="text-xs text-gray-400">{animal.breed.name || 'Race inconnue'}</div>
                           )}
                         </TableCell>
                         <TableCell>{ownerName}</TableCell>

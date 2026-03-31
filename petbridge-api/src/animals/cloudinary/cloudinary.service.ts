@@ -4,10 +4,10 @@ import toStream = require('buffer-to-stream');
 
 @Injectable()
 export class CloudinaryService {
-  async uploadImage(file: any): Promise<UploadApiResponse | UploadApiErrorResponse> {
+  async uploadImage(file: any, folder: string = 'petbridge/animals'): Promise<UploadApiResponse | UploadApiErrorResponse> {
     return new Promise((resolve, reject) => {
       const upload = v2.uploader.upload_stream(
-        { folder: 'petbridge/animals' },
+        { folder },
         (error, result) => {
           if (error) {
             reject(error);

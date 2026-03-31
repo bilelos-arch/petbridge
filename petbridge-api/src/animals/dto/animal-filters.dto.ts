@@ -1,4 +1,5 @@
 import { IsString, IsEnum, IsOptional, IsBoolean, IsNumber, IsDateString } from 'class-validator';
+import { Type } from 'class-transformer';
 import { Species, Sex, Size, AnimalStatus, Temperament } from '@prisma/client';
 
 export class AnimalFiltersDto {
@@ -36,7 +37,7 @@ export class AnimalFiltersDto {
 
   @IsOptional()
   @IsString()
-  breed?: string;
+  breedId?: string;
 
   @IsOptional()
   @IsString()
@@ -53,4 +54,14 @@ export class AnimalFiltersDto {
   @IsOptional()
   @IsString()
   search?: string;
+
+  @IsOptional()
+  @Type(() => Number)
+  @IsNumber()
+  page?: number;
+
+  @IsOptional()
+  @Type(() => Number)
+  @IsNumber()
+  limit?: number;
 }

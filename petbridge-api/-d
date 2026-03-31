@@ -1,0 +1,1 @@
+{"message":["L'email est requis","L'email doit être valide","Le mot de passe est requis"],"error":"Bad Request","statusCode":400}

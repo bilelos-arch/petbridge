@@ -83,8 +83,8 @@ export class AdoptionsController {
   }
 
   /**
-   * Reject an adoption request
-   */
+    * Reject an adoption request
+    */
   @Patch(':id/reject')
   async rejectAdoptionRequest(
     @Param('id') id: string,
@@ -92,5 +92,17 @@ export class AdoptionsController {
     @Body() dto: RejectAdoptionDto,
   ) {
     return this.adoptionsService.rejectAdoptionRequest(id, currentUser.id, dto);
+  }
+
+  /**
+   * Send a pre-acceptance message to adoption request
+   */
+  @Post(':id/message')
+  async sendPreAcceptanceMessage(
+    @Param('id') id: string,
+    @CurrentUser() currentUser,
+    @Body() dto: { content: string },
+  ) {
+    return this.adoptionsService.sendPreAcceptanceMessage(id, currentUser.id, dto.content);
   }
 }

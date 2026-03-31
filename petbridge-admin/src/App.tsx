@@ -9,6 +9,8 @@ import Animals from './pages/Animals';
 import Users from './pages/Users';
 import Reports from './pages/Reports';
 import Adoptions from './pages/Adoptions';
+import Breeds from './pages/Breeds';
+import Sightings from './pages/Sightings';
 
 const App: React.FC = () => {
   return (
@@ -25,6 +27,8 @@ const App: React.FC = () => {
               <Route path="/adoptions" element={<Adoptions />} />
               <Route path="/users" element={<Users />} />
               <Route path="/reports" element={<Reports />} />
+              <Route path="/sightings" element={<Sightings />} />
+              <Route path="/breeds" element={<Breeds />} />
             </Route>
           </Route>
           

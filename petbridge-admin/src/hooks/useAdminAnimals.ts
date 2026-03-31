@@ -8,13 +8,18 @@ export interface Animal {
   name: string;
   species: 'CHIEN' | 'CHAT' | 'AUTRE';
   status: AnimalStatus;
-  breed: string | null;
+  breed: { id: string; name: string } | null;
   createdAt: string;
   photos: { url: string; isPrimary: boolean }[];
   owner: {
     email: string;
     profile: { firstName: string; lastName: string } | null;
   };
+  vaccinated?: boolean;
+  spayed?: boolean;
+  dewormed?: boolean;
+  color?: string;
+  medicalConditions?: string;
 }
 
 export interface AdminAnimalsResponse {
@@ -50,8 +55,8 @@ export const useAdminAnimals = (filters: AdminAnimalsFilters = {}) => {
       const response = await axios.get(`${API_BASE}?${params}`);
       return response.data;
     },
-    staleTime: 1000 * 60, // 1 minute
-    refetchInterval: 1000 * 60 * 5, // 5 minutes
+    staleTime: 0,
+    refetchInterval: false,
   });
 
   const approveAnimal = useMutation({

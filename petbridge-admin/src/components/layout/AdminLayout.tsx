@@ -8,6 +8,8 @@ import {
   FileText,
   AlertTriangle,
   LogOut,
+  Heart,
+  MapPin,
 } from 'lucide-react';
 
 const AdminLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
@@ -15,11 +17,13 @@ const AdminLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { logout, user } = useAuth();
 
   const navItems = [
-    { path: '/', label: 'Tableau de bord', icon: Home },
+    { path: '/dashboard', label: 'Tableau de bord', icon: Home },
     { path: '/animals', label: 'Animaux', icon: PawPrint },
     { path: '/adoptions', label: 'Adoptions', icon: FileText },
     { path: '/users', label: 'Utilisateurs', icon: Users },
     { path: '/reports', label: 'Signaux', icon: AlertTriangle },
+    { path: '/sightings', label: 'Signalements', icon: MapPin },
+    { path: '/breeds', label: 'Races', icon: Heart },
   ];
 
   return (

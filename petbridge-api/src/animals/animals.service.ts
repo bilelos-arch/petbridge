@@ -7,6 +7,7 @@ import { AnimalFiltersDto } from './dto/animal-filters.dto';
 import { RejectAnimalDto } from './dto/reject-animal.dto';
 import { AdminAnimalFiltersDto } from './dto/admin-animal-filters.dto';
 import { CloudinaryService } from './cloudinary/cloudinary.service';
+import { NotificationsService } from '../notifications/notifications.service';
 import { AnimalStatus, Prisma } from '@prisma/client';
 
 @Injectable()
@@ -14,6 +15,7 @@ export class AnimalsService {
   constructor(
     private prisma: PrismaService,
     private cloudinaryService: CloudinaryService,
+    private notificationsService: NotificationsService,
   ) {}
 
   async createAnimal(createAnimalDto: CreateAnimalDto, ownerId: string) {
@@ -24,7 +26,37 @@ export class AnimalsService {
           ownerId,
           originalOwnerId: ownerId, // ← ajouté
         },
-        include: {
+        select: {
+          id: true,
+          ownerId: true,
+          originalOwnerId: true,
+          name: true,
+          species: true,
+          sex: true,
+          size: true,
+          temperament: true,
+          age: true,
+          description: true,
+          vaccinated: true,
+          spayed: true,
+          dewormed: true,
+          color: true,
+          birthDate: true,
+          medicalConditions: true,
+          city: true,
+          status: true,
+          rejectedReason: true,
+          publishedAt: true,
+          createdAt: true,
+          updatedAt: true,
+          breedId: true,
+          breed: true,
+          owner: {
+            select: {
+              id: true,
+              profile: true,
+            },
+          },
           photos: true,
           healthRecords: true,
         },
@@ -39,16 +71,20 @@ export class AnimalsService {
       sex,
       size,
       temperament,
-      status = AnimalStatus.DISPONIBLE, // ← corrigé
+      status, // ← removed default to allow no status filter
       vaccinated,
       spayed,
       dewormed,
-      breed,
+      breedId,
       color,
       minAge,
       maxAge,
       search,
+      page = 1,
+      limit = 10,
     } = filters;
+
+    const skip = (page - 1) * limit;
 
     return this.prisma.animal.findMany({
       where: {
@@ -56,11 +92,11 @@ export class AnimalsService {
         sex,
         size,
         temperament,
-        status,
+        status: status ? status : { in: [AnimalStatus.DISPONIBLE, AnimalStatus.EN_COURS_ADOPTION] },
         vaccinated,
         spayed,
         dewormed,
-        breed,
+        breedId,
         color,
         age: minAge || maxAge ? {
           ...(minAge ? { gte: minAge } : {}),
@@ -68,11 +104,36 @@ export class AnimalsService {
         } : undefined,
         OR: search ? [
           { name: { contains: search, mode: 'insensitive' } },
-          { breed: { contains: search, mode: 'insensitive' } },
+          { breed: { name: { contains: search, mode: 'insensitive' } } },
           { description: { contains: search, mode: 'insensitive' } },
+          { city: { contains: search, mode: 'insensitive' } }, // Ajout filtre par ville
         ] : undefined,
       },
-      include: {
+      select: {
+        id: true,
+        ownerId: true,
+        originalOwnerId: true,
+        name: true,
+        species: true,
+        sex: true,
+        size: true,
+        temperament: true,
+        age: true,
+        description: true,
+        vaccinated: true,
+        spayed: true,
+        dewormed: true,
+        color: true,
+        birthDate: true,
+        medicalConditions: true,
+        city: true,
+        status: true,
+        rejectedReason: true,
+        publishedAt: true,
+        createdAt: true,
+        updatedAt: true,
+        breedId: true,
+        breed: true,
         owner: {
           select: {
             id: true,
@@ -85,13 +146,39 @@ export class AnimalsService {
       orderBy: {
         createdAt: 'desc',
       },
+      skip,
+      take: limit,
     });
   }
 
   async getAnimalById(id: string) {
     const animal = await this.prisma.animal.findUnique({
       where: { id },
-      include: {
+      select: {
+        id: true,
+        ownerId: true,
+        originalOwnerId: true,
+        name: true,
+        species: true,
+        sex: true,
+        size: true,
+        temperament: true,
+        age: true,
+        description: true,
+        vaccinated: true,
+        spayed: true,
+        dewormed: true,
+        color: true,
+        birthDate: true,
+        medicalConditions: true,
+        city: true,
+        status: true,
+        rejectedReason: true,
+        publishedAt: true,
+        createdAt: true,
+        updatedAt: true,
+        breedId: true,
+        breed: true,
         owner: {
           select: {
             id: true,
@@ -128,7 +215,37 @@ export class AnimalsService {
       return prisma.animal.update({
         where: { id },
         data: updateAnimalDto,
-        include: {
+        select: {
+          id: true,
+          ownerId: true,
+          originalOwnerId: true,
+          name: true,
+          species: true,
+          sex: true,
+          size: true,
+          temperament: true,
+          age: true,
+          description: true,
+          vaccinated: true,
+          spayed: true,
+          dewormed: true,
+          color: true,
+          birthDate: true,
+          medicalConditions: true,
+          city: true,
+          status: true,
+          rejectedReason: true,
+          publishedAt: true,
+          createdAt: true,
+          updatedAt: true,
+          breedId: true,
+          breed: true,
+          owner: {
+            select: {
+              id: true,
+              profile: true,
+            },
+          },
           photos: true,
           healthRecords: true,
         },
@@ -168,36 +285,28 @@ export class AnimalsService {
     });
   }
 
-  async uploadPhoto(id: string, file: any, userId: string, userRoles: string[]) {
-    const animal = await this.prisma.animal.findUnique({
-      where: { id },
-    });
+async uploadPhoto(id: string, file: any, userId: string, userRoles: string[]) {
+  const animal = await this.prisma.animal.findUnique({ where: { id } });
+  if (!animal) throw new NotFoundException('Animal non trouvé');
+  if (animal.ownerId !== userId && !userRoles.includes('ADMIN'))
+    throw new ForbiddenException('Non autorisé');
 
-    if (!animal) {
-      throw new NotFoundException('Animal non trouvé');
-    }
+  // Upload Cloudinary HORS transaction
+  const result = await this.cloudinaryService.uploadImage(file);
 
-    if (animal.ownerId !== userId && !userRoles.includes('ADMIN')) {
-      throw new ForbiddenException('Non autorisé');
-    }
+  const existingPhotosCount = await this.prisma.animalPhoto.count({
+    where: { animalId: id },
+  });
 
-    return this.prisma.$transaction(async (prisma) => {
-      const result = await this.cloudinaryService.uploadImage(file);
-
-      const existingPhotosCount = await prisma.animalPhoto.count({
-        where: { animalId: id },
-      });
-
-      return prisma.animalPhoto.create({
-        data: {
-          animalId: id,
-          url: result.secure_url,
-          publicId: result.public_id,
-          isPrimary: existingPhotosCount === 0,
-        },
-      });
-    });
-  }
+  return this.prisma.animalPhoto.create({
+    data: {
+      animalId: id,
+      url: result.secure_url,
+      publicId: result.public_id,
+      isPrimary: existingPhotosCount === 0,
+    },
+  });
+}
 
   async deletePhoto(animalId: string, photoId: string, userId: string, userRoles: string[]) {
     const animal = await this.prisma.animal.findUnique({ where: { id: animalId } });
@@ -253,29 +362,79 @@ export class AnimalsService {
   }
 
   async approveAnimal(id: string) {
-    return this.prisma.animal.update({
+    const animal = await this.prisma.animal.update({
       where: { id },
       data: {
-        status: AnimalStatus.DISPONIBLE, // ← corrigé
+        status: AnimalStatus.DISPONIBLE,
         publishedAt: new Date(),
       },
     });
+
+    // Send push notification to owner
+    await this.notificationsService.sendPushNotification(
+      animal.ownerId,
+      '✅ Annonce validée !',
+      `${animal.name} est maintenant visible par tous`,
+      { type: 'animal_approved', animalId: animal.id }
+    );
+
+    return animal;
   }
 
   async rejectAnimal(id: string, dto: RejectAnimalDto) {
-    return this.prisma.animal.update({
+    const animal = await this.prisma.animal.update({
       where: { id },
       data: {
-        status: AnimalStatus.REJETE, // ← corrigé
+        status: AnimalStatus.REJETE,
         rejectedReason: dto.rejectedReason,
       },
     });
+
+    // Send push notification to owner
+    await this.notificationsService.sendPushNotification(
+      animal.ownerId,
+      '❌ Annonce rejetée',
+      `Votre annonce pour ${animal.name} a été rejetée`,
+      { type: 'animal_rejected', animalId: animal.id }
+    );
+
+    return animal;
   }
 
   async getAnimalsByOwner(ownerId: string) {
     return this.prisma.animal.findMany({
       where: { ownerId },
-      include: {
+      select: {
+        id: true,
+        ownerId: true,
+        originalOwnerId: true,
+        name: true,
+        species: true,
+        sex: true,
+        size: true,
+        temperament: true,
+        age: true,
+        description: true,
+        vaccinated: true,
+        spayed: true,
+        dewormed: true,
+        color: true,
+        birthDate: true,
+        medicalConditions: true,
+        city: true,
+        status: true,
+        rejectedReason: true,
+        publishedAt: true,
+        createdAt: true,
+        updatedAt: true,
+        breedId: true,
+        breed: true,
+        owner: {
+          select: {
+            id: true,
+            profile: true,
+          },
+        },
         photos: true,
         healthRecords: true,
       },
@@ -292,7 +451,7 @@ export class AnimalsService {
       ...(search ? {
         OR: [
           { name: { contains: search, mode: Prisma.QueryMode.insensitive } },
-          { breed: { contains: search, mode: Prisma.QueryMode.insensitive } },
+          { breed: { name: { contains: search, mode: Prisma.QueryMode.insensitive } } },
         ]
       } : {}),
     };
@@ -300,7 +459,31 @@ export class AnimalsService {
     const [data, total] = await Promise.all([
       this.prisma.animal.findMany({
         where,
-        include: {
+        select: {
+          id: true,
+          ownerId: true,
+          originalOwnerId: true,
+          name: true,
+          species: true,
+          sex: true,
+          size: true,
+          temperament: true,
+          age: true,
+          description: true,
+          vaccinated: true,
+          spayed: true,
+          dewormed: true,
+          color: true,
+          birthDate: true,
+          medicalConditions: true,
+          city: true,
+          status: true,
+          rejectedReason: true,
+          publishedAt: true,
+          createdAt: true,
+          updatedAt: true,
+          breedId: true,
+          breed: true,
           owner: {
             select: {
               email: true,

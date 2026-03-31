@@ -1,15 +1,17 @@
 import React, { useEffect, useState } from 'react';
 import {
-  View, Text, ScrollView, SafeAreaView, StatusBar,
+  View, Text, ScrollView, StatusBar,
   ActivityIndicator, Image, TouchableOpacity,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { router, useLocalSearchParams } from 'expo-router';
 import axiosInstance from '../../src/lib/axios';
 import { threadService } from '../../src/services/threadService';
 import { useAuthStore } from '../../src/store/authStore';
+import LoadingScreen from '../../src/components/LoadingScreen';
 
 export default function PublicProfileScreen() {
-  const { id } = useLocalSearchParams<{ id: string }>();
+  const { id, animalId } = useLocalSearchParams<{ id: string; animalId?: string }>();
   const { user: currentUser } = useAuthStore();
   const [profile, setProfile] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -18,7 +20,10 @@ export default function PublicProfileScreen() {
   useEffect(() => {
     const load = async () => {
       try {
-        const res = await axiosInstance.get(`/users/${id}/public`);
+        const url = animalId
+          ? `/users/${id}/public?animalId=${animalId}`
+          : `/users/${id}/public`;
+        const res = await axiosInstance.get(url);
         setProfile(res.data);
 
         // Chercher un thread commun
@@ -38,11 +43,7 @@ export default function PublicProfileScreen() {
 
   const isViewingAdopter = currentUser?.id !== id;
 
-  if (isLoading) return (
-    <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: '#F7F8FA' }}>
-      <ActivityIndicator size="large" color="#FF6B35" />
-    </View>
-  );
+  if (isLoading) return <LoadingScreen />;
 
   if (!profile) return (
     <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: '#F7F8FA' }}>
@@ -51,7 +52,7 @@ export default function PublicProfileScreen() {
   );
 
   const fullName = `${profile.profile?.firstName || ''} ${profile.profile?.lastName || ''}`.trim() || 'Utilisateur';
-  const isAdopter = profile.role === 'ADOPTANT';
+  const isAdopter = profile.roles?.includes('ADOPTANT') ?? true;
 
   const InfoRow = ({ icon, label, value }: any) => value != null && value !== '' ? (
     <View style={{ flexDirection: 'row', alignItems: 'center', paddingVertical: 10, borderBottomWidth: 1, borderBottomColor: '#F0F0F0' }}>
@@ -64,7 +65,7 @@ export default function PublicProfileScreen() {
   ) : null;
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: '#F7F8FA' }}>
+    <SafeAreaView style={{ flex: 1, backgroundColor: '#F7F8FA' }} edges={['top']}>
       <StatusBar barStyle="dark-content" />
       <ScrollView contentContainerStyle={{ paddingBottom: 40 }}>
         {/* Header */}
@@ -88,6 +89,77 @@ export default function PublicProfileScreen() {
               {isAdopter ? '🐾 Adoptant' : '🏡 Annonceur'}
             </Text>
           </View>
+
+          {/* Compatibility Score */}
+          {profile.matchScore !== undefined && (
+            <View style={{
+              backgroundColor: '#F7F8FA',
+              borderRadius: 12,
+              paddingHorizontal: 16,
+              paddingVertical: 12,
+              marginTop: 12,
+              width: '100%',
+            }}>
+              <Text style={{ fontSize: 14, fontWeight: '700', color: '#2D3436', marginBottom: 8 }}>🐾 Compatibilité</Text>
+              <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 4 }}>
+                <View style={{
+                  flex: 1,
+                  height: 8,
+                  backgroundColor: '#E8ECEF',
+                  borderRadius: 4,
+                  overflow: 'hidden',
+                }}>
+                  <View style={{
+                    width: `${profile.matchScore}%`,
+                    height: '100%',
+                    backgroundColor: profile.matchScore >= 80 ? '#4ECDC4' :
+                                       profile.matchScore >= 50 ? '#FFE66D' : '#FF6B35',
+                  }} />
+                </View>
+                <Text style={{
+                  fontSize: 14,
+                  fontWeight: '700',
+                  color: profile.matchScore >= 80 ? '#4ECDC4' :
+                         profile.matchScore >= 50 ? '#FFE66D' : '#FF6B35',
+                  marginLeft: 8,
+                }}>{profile.matchScore}%</Text>
+              </View>
+              <Text style={{ fontSize: 12, color: '#b2bec3' }}>avec votre animal</Text>
+            </View>
+          )}
+
+          {/* Badges */}
+          {profile.profile?.completionBadge && (
+            <View style={{
+              backgroundColor: '#FFE66D',
+              borderRadius: 12,
+              paddingHorizontal: 12,
+              paddingVertical: 8,
+              marginTop: 8,
+              flexDirection: 'row',
+              alignItems: 'center',
+              width: '100%',
+            }}>
+              <Text style={{ fontSize: 16, marginRight: 8 }}>🏆</Text>
+              <Text style={{ fontSize: 13, fontWeight: '700', color: '#2D3436' }}>Adoptant exemplaire</Text>
+            </View>
+          )}
+
+          {profile.profile?.warningBadge && (
+            <View style={{
+              backgroundColor: '#FF4444',
+              borderRadius: 12,
+              paddingHorizontal: 12,
+              paddingVertical: 8,
+              marginTop: 8,
+              flexDirection: 'row',
+              alignItems: 'center',
+              width: '100%',
+            }}>
+              <Text style={{ fontSize: 16, marginRight: 8 }}>⚠️</Text>
+              <Text style={{ fontSize: 13, fontWeight: '700', color: '#FFFFFF' }}>Avertissements</Text>
+            </View>
+          )}
         </View>
 
         {/* Infos complètes si adoptant */}

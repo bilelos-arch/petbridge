@@ -7,5 +7,7 @@ import { PrismaModule } from '../prisma/prisma.module';
   imports: [PrismaModule],
   controllers: [CheckInsController],
   providers: [CheckInsService],
+  exports: [CheckInsService],
 })
 export class CheckInsModule {}
+

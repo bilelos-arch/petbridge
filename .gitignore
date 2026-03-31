@@ -4,8 +4,8 @@
 *.swp
 *.swo
 
-# Node_modules
-node_modules/
+# Node_modules (all directories)
+**/node_modules/
 
 # Build outputs
 dist/
@@ -44,3 +44,13 @@ coverage/
 
 # OS generated files
 Thumbs.db
+
+# Pet project specific
+**/package-lock.json
+petbridge-api/prisma/migrations/
+!petbridge-api/prisma/migrations/migration_lock.toml
+petbridge-mobile-v2/.expo/
+petbridge-mobile-v2/dist/
+petbridge-mobile-v2/android/
+petbridge-mobile-v2/ios/
+petbridge-mobile-v2/google-services.json

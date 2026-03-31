@@ -12,9 +12,13 @@ type Status =
   | 'OUVERT'
   | 'EN_COURS'
   | 'RESOLU'
-  | 'BANNI';
+  | 'BANNI'
+  | 'SIGNALE'
+  | 'PRIS_EN_CHARGE'
+  | 'SECOURU'
+  | 'NON_TROUVE';
 
-type StatusType = 'animal' | 'adoption' | 'report' | 'user';
+type StatusType = 'animal' | 'adoption' | 'report' | 'user' | 'sighting';
 
 interface StatusBadgeProps {
   status: Status;
@@ -81,6 +85,22 @@ const getStatusStyles = (status: Status, type: StatusType) => {
     }
   }
 
+  // Sighting statuses
+  if (type === 'sighting') {
+    switch (status) {
+      case 'SIGNALE':
+        return 'bg-orange-100 text-orange-800 border-orange-200';
+      case 'PRIS_EN_CHARGE':
+        return 'bg-blue-100 text-blue-800 border-blue-200';
+      case 'SECOURU':
+        return 'bg-green-100 text-green-800 border-green-200';
+      case 'NON_TROUVE':
+        return 'bg-gray-100 text-gray-800 border-gray-200';
+      default:
+        return 'bg-slate-100 text-slate-800 border-slate-200';
+    }
+  }
+
   // Default style
   return 'bg-slate-100 text-slate-800 border-slate-200';
 };
@@ -101,6 +121,10 @@ const getStatusLabel = (status: Status) => {
     EN_COURS: 'En cours',
     RESOLU: 'Résolu',
     BANNI: 'Banni',
+    SIGNALE: 'Signalé',
+    PRIS_EN_CHARGE: 'Prise en charge',
+    SECOURU: 'Secouru',
+    NON_TROUVE: 'Introuvable',
   };
   return labels[status] || status;
 };

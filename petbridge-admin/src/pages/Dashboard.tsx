@@ -31,7 +31,6 @@ import { useReports } from '../hooks/useReports';
 import { useAdoptions } from '../hooks/useAdoptions';
 import { StatCard } from '../components/ui/StatCard';
 import { StatusBadge } from '../components/ui/StatusBadge';
-import { PageHeader } from '../components/ui/PageHeader';
 
 const DashboardPage: React.FC = () => {
   const [rejectReason, setRejectReason] = useState<string>('');

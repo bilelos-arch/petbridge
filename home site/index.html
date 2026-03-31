@@ -1,0 +1,874 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>PetBridge — L'adoption responsable, réinventée</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,600;0,9..144,800;1,9..144,300;1,9..144,600&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --cream:   #FAF6EF;
+      --cream2:  #F2EBE0;
+      --forest:  #1C3D2E;
+      --moss:    #2E5C45;
+      --sage:    #5A8A6E;
+      --amber:   #D97B3A;
+      --amber2:  #F0A265;
+      --warm:    #E8C89A;
+      --text:    #1A2B22;
+      --muted:   #6B7D75;
+    }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      font-family: 'DM Sans', sans-serif;
+      background: var(--cream);
+      color: var(--text);
+      overflow-x: hidden;
+    }
+
+    /* ── NOISE OVERLAY ── */
+    body::before {
+      content: '';
+      position: fixed; inset: 0;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
+      pointer-events: none; z-index: 0; opacity: .5;
+    }
+
+    /* ── NAV ── */
+    nav {
+      position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 1.2rem 5vw;
+      background: rgba(250,246,239,.85);
+      backdrop-filter: blur(14px);
+      border-bottom: 1px solid rgba(92,138,110,.15);
+      transition: box-shadow .3s;
+    }
+    nav.scrolled { box-shadow: 0 2px 30px rgba(28,61,46,.08); }
+
+    .nav-logo {
+      font-family: 'Fraunces', serif;
+      font-size: 1.5rem; font-weight: 800;
+      color: var(--forest); letter-spacing: -.02em;
+      display: flex; align-items: center; gap: .5rem;
+      text-decoration: none;
+    }
+    .nav-logo .paw { font-size: 1.3rem; }
+
+    .nav-links { display: flex; align-items: center; gap: 2rem; }
+    .nav-links a {
+      color: var(--muted); text-decoration: none;
+      font-size: .9rem; font-weight: 500; transition: color .2s;
+    }
+    .nav-links a:hover { color: var(--forest); }
+
+    .nav-cta {
+      background: var(--forest); color: var(--cream) !important;
+      padding: .55rem 1.4rem; border-radius: 50px;
+      font-weight: 600 !important; transition: background .2s, transform .2s !important;
+    }
+    .nav-cta:hover { background: var(--moss) !important; transform: translateY(-1px); }
+
+    /* ── HERO ── */
+    .hero {
+      min-height: 100vh;
+      display: grid; grid-template-columns: 1fr 1fr;
+      align-items: center; gap: 4rem;
+      padding: 8rem 5vw 5rem;
+      position: relative; overflow: hidden;
+    }
+
+    .hero-bg {
+      position: absolute; inset: 0; z-index: -1;
+      background:
+        radial-gradient(ellipse 70% 60% at 75% 50%, rgba(90,138,110,.12) 0%, transparent 60%),
+        radial-gradient(ellipse 40% 40% at 20% 80%, rgba(217,123,58,.08) 0%, transparent 50%);
+    }
+
+    /* Animated floating blobs */
+    .blob {
+      position: absolute; border-radius: 50%; filter: blur(60px);
+      animation: blobFloat 8s ease-in-out infinite;
+      pointer-events: none; z-index: -1;
+    }
+    .blob-1 { width: 400px; height: 400px; background: rgba(90,138,110,.15); top: -100px; right: -100px; animation-delay: 0s; }
+    .blob-2 { width: 300px; height: 300px; background: rgba(217,123,58,.1); bottom: -80px; left: 10%; animation-delay: -3s; }
+    .blob-3 { width: 200px; height: 200px; background: rgba(28,61,46,.08); top: 40%; right: 25%; animation-delay: -5s; }
+
+    @keyframes blobFloat {
+      0%, 100% { transform: translate(0,0) scale(1); }
+      33% { transform: translate(20px,-20px) scale(1.05); }
+      66% { transform: translate(-15px,15px) scale(.95); }
+    }
+
+    .hero-content { animation: fadeUp .8s ease both; }
+
+    .hero-badge {
+      display: inline-flex; align-items: center; gap: .5rem;
+      background: rgba(217,123,58,.12); color: var(--amber);
+      border: 1px solid rgba(217,123,58,.25);
+      padding: .4rem 1rem; border-radius: 50px;
+      font-size: .8rem; font-weight: 600; letter-spacing: .05em; text-transform: uppercase;
+      margin-bottom: 1.5rem;
+    }
+    .hero-badge .dot {
+      width: 6px; height: 6px; border-radius: 50%;
+      background: var(--amber); animation: pulse 2s infinite;
+    }
+    @keyframes pulse { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:.5;transform:scale(1.4)} }
+
+    h1 {
+      font-family: 'Fraunces', serif;
+      font-size: clamp(3rem, 5vw, 5rem);
+      font-weight: 800; line-height: 1.05;
+      color: var(--forest); letter-spacing: -.03em;
+      margin-bottom: 1.5rem;
+    }
+    h1 em { font-style: italic; color: var(--amber); font-weight: 600; }
+
+    .hero-desc {
+      font-size: 1.1rem; color: var(--muted); line-height: 1.7;
+      max-width: 480px; margin-bottom: 2.5rem; font-weight: 300;
+    }
+
+    .hero-actions { display: flex; gap: 1rem; flex-wrap: wrap; margin-bottom: 3rem; }
+
+    .btn-primary {
+      display: inline-flex; align-items: center; gap: .6rem;
+      background: var(--forest); color: var(--cream);
+      padding: .9rem 2rem; border-radius: 50px;
+      font-weight: 600; font-size: .95rem;
+      text-decoration: none; transition: all .25s;
+      box-shadow: 0 4px 20px rgba(28,61,46,.2);
+    }
+    .btn-primary:hover { background: var(--moss); transform: translateY(-2px); box-shadow: 0 8px 30px rgba(28,61,46,.25); }
+    .btn-primary svg { width: 18px; height: 18px; }
+
+    .btn-secondary {
+      display: inline-flex; align-items: center; gap: .6rem;
+      background: transparent; color: var(--forest);
+      border: 1.5px solid rgba(28,61,46,.25);
+      padding: .9rem 2rem; border-radius: 50px;
+      font-weight: 600; font-size: .95rem;
+      text-decoration: none; transition: all .25s;
+    }
+    .btn-secondary:hover { border-color: var(--forest); background: rgba(28,61,46,.04); }
+
+    .hero-trust {
+      display: flex; align-items: center; gap: 1rem;
+      font-size: .82rem; color: var(--muted);
+    }
+    .trust-avatars { display: flex; }
+    .trust-avatars span {
+      width: 32px; height: 32px; border-radius: 50%;
+      border: 2px solid var(--cream);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1rem; margin-left: -8px;
+      background: var(--cream2);
+    }
+    .trust-avatars span:first-child { margin-left: 0; }
+
+    /* ── PHONE MOCKUP ── */
+    .hero-visual {
+      display: flex; justify-content: center; align-items: center;
+      position: relative; animation: fadeUp .8s ease .2s both;
+    }
+
+    .phone-wrap {
+      position: relative;
+      animation: phoneFloat 5s ease-in-out infinite;
+    }
+    @keyframes phoneFloat {
+      0%,100%{transform:translateY(0) rotate(-2deg)}
+      50%{transform:translateY(-18px) rotate(-1deg)}
+    }
+
+    .phone {
+      width: 260px; height: 520px;
+      background: var(--forest);
+      border-radius: 42px;
+      border: 3px solid rgba(255,255,255,.1);
+      box-shadow:
+        0 40px 80px rgba(28,61,46,.35),
+        0 0 0 1px rgba(28,61,46,.5),
+        inset 0 1px 0 rgba(255,255,255,.08);
+      overflow: hidden; position: relative;
+    }
+
+    .phone-notch {
+      width: 100px; height: 28px; background: var(--forest);
+      border-radius: 0 0 20px 20px;
+      margin: 0 auto; position: relative; z-index: 2;
+      border: 3px solid rgba(0,0,0,.3); border-top: 0;
+    }
+
+    .phone-screen {
+      position: absolute; inset: 0;
+      background: linear-gradient(160deg, #1C3D2E 0%, #0F2419 100%);
+      display: flex; flex-direction: column; padding: 0;
+      overflow: hidden;
+    }
+
+    .app-header {
+      padding: 3.5rem 1.2rem 1rem;
+      background: rgba(255,255,255,.03);
+      border-bottom: 1px solid rgba(255,255,255,.05);
+    }
+    .app-header-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 1rem; }
+    .app-logo-sm { font-family:'Fraunces',serif; color:#fff; font-size:.9rem; font-weight:700; }
+    .app-notif {
+      width: 32px; height: 32px; border-radius: 10px;
+      background: rgba(255,255,255,.08); display: flex; align-items: center; justify-content: center;
+      font-size: .9rem; position: relative;
+    }
+    .app-notif::after {
+      content:''; position:absolute; top:5px; right:5px;
+      width:7px; height:7px; border-radius:50%; background: var(--amber2);
+    }
+
+    .search-bar {
+      background: rgba(255,255,255,.07); border-radius: 12px;
+      padding: .5rem .8rem; display: flex; align-items: center; gap: .5rem;
+      font-size: .72rem; color: rgba(255,255,255,.4);
+    }
+    .search-bar svg { width:14px; height:14px; opacity:.5; flex-shrink:0; }
+
+    .app-cards { padding: .8rem 1rem; flex: 1; overflow: hidden; }
+    .app-section-title {
+      font-size: .65rem; font-weight: 600; text-transform: uppercase;
+      letter-spacing: .08em; color: rgba(255,255,255,.4);
+      margin-bottom: .7rem;
+    }
+
+    .pet-card {
+      background: rgba(255,255,255,.06);
+      border-radius: 16px; overflow: hidden;
+      margin-bottom: .7rem;
+      border: 1px solid rgba(255,255,255,.08);
+    }
+    .pet-card-img {
+      height: 90px; display: flex; align-items: center; justify-content: center;
+      font-size: 3rem;
+      background: linear-gradient(135deg, rgba(90,138,110,.3), rgba(217,123,58,.2));
+    }
+    .pet-card-info { padding: .55rem .7rem; }
+    .pet-card-name { color:#fff; font-size:.72rem; font-weight:600; margin-bottom:.15rem; }
+    .pet-card-sub  { color:rgba(255,255,255,.4); font-size:.6rem; }
+    .pet-card-tag  {
+      display:inline-block; background:rgba(90,138,110,.3); color: #7EC8A0;
+      font-size:.55rem; padding:.15rem .4rem; border-radius:4px; margin-top:.25rem;
+      font-weight:600;
+    }
+
+    .pet-row { display: flex; gap: .6rem; }
+    .pet-row .pet-card { flex: 1; }
+    .pet-row .pet-card .pet-card-img { height: 70px; font-size: 2rem; }
+
+    .phone-glow {
+      position: absolute;
+      width: 300px; height: 300px;
+      background: radial-gradient(circle, rgba(90,138,110,.35) 0%, transparent 70%);
+      top: 50%; left: 50%; transform: translate(-50%, -55%);
+      border-radius: 50%; filter: blur(40px);
+      pointer-events: none; z-index: -1;
+    }
+
+    /* floating badges around phone */
+    .float-badge {
+      position: absolute;
+      background: var(--cream); border-radius: 14px;
+      padding: .6rem .9rem; box-shadow: 0 8px 30px rgba(28,61,46,.12);
+      display: flex; align-items: center; gap: .5rem;
+      font-size: .78rem; font-weight: 600; color: var(--forest);
+      border: 1px solid rgba(28,61,46,.08);
+      animation: badgeFloat 4s ease-in-out infinite;
+    }
+    .float-badge.b1 { top: 15%; right: -90px; animation-delay: -1s; }
+    .float-badge.b2 { bottom: 20%; left: -100px; animation-delay: -2.5s; }
+    @keyframes badgeFloat {
+      0%,100%{transform:translateY(0)} 50%{transform:translateY(-8px)}
+    }
+    .float-badge .icon { font-size: 1.1rem; }
+
+    /* ── STATS BAR ── */
+    .stats-bar {
+      background: var(--forest);
+      padding: 2rem 5vw;
+      display: flex; align-items: center; justify-content: space-evenly;
+      flex-wrap: wrap; gap: 2rem;
+    }
+    .stat-item { text-align: center; }
+    .stat-num {
+      font-family: 'Fraunces', serif;
+      font-size: 2.2rem; font-weight: 800;
+      color: var(--cream); letter-spacing: -.02em;
+      display: block;
+    }
+    .stat-num span { color: var(--amber2); }
+    .stat-label { font-size: .82rem; color: rgba(250,246,239,.5); margin-top: .2rem; }
+    .stat-divider { width: 1px; height: 50px; background: rgba(255,255,255,.1); }
+
+    /* ── SECTIONS COMMON ── */
+    section { padding: 6rem 5vw; position: relative; }
+    .section-tag {
+      display: inline-block;
+      font-size: .75rem; font-weight: 600; letter-spacing: .1em; text-transform: uppercase;
+      color: var(--sage); margin-bottom: 1rem;
+    }
+    h2 {
+      font-family: 'Fraunces', serif;
+      font-size: clamp(2rem, 3.5vw, 3rem);
+      font-weight: 800; color: var(--forest);
+      letter-spacing: -.02em; line-height: 1.15;
+      margin-bottom: 1rem;
+    }
+    .section-sub {
+      font-size: 1rem; color: var(--muted);
+      line-height: 1.7; max-width: 540px;
+      font-weight: 300;
+    }
+
+    /* ── FEATURES ── */
+    .features { background: var(--cream2); }
+    .features-grid {
+      display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: 1.5rem; margin-top: 3.5rem;
+    }
+    .feature-card {
+      background: var(--cream); border-radius: 20px;
+      padding: 2rem; border: 1px solid rgba(28,61,46,.06);
+      transition: transform .3s, box-shadow .3s;
+      position: relative; overflow: hidden;
+    }
+    .feature-card::before {
+      content: ''; position: absolute; inset: 0;
+      background: linear-gradient(135deg, rgba(90,138,110,.04) 0%, transparent 60%);
+      transition: opacity .3s;
+    }
+    .feature-card:hover { transform: translateY(-4px); box-shadow: 0 16px 40px rgba(28,61,46,.1); }
+    .feature-icon {
+      width: 52px; height: 52px; border-radius: 14px;
+      background: var(--forest); display: flex; align-items: center; justify-content: center;
+      font-size: 1.4rem; margin-bottom: 1.5rem;
+    }
+    .feature-card h3 {
+      font-family: 'Fraunces', serif;
+      font-size: 1.2rem; font-weight: 700; color: var(--forest);
+      margin-bottom: .6rem;
+    }
+    .feature-card p { font-size: .88rem; color: var(--muted); line-height: 1.6; font-weight: 300; }
+
+    /* ── HOW IT WORKS ── */
+    .steps {
+      display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 2rem; margin-top: 4rem; position: relative;
+    }
+    .steps::before {
+      content: '';
+      position: absolute; top: 36px; left: 15%; right: 15%; height: 1px;
+      background: linear-gradient(90deg, transparent, var(--warm), transparent);
+    }
+    .step { text-align: center; position: relative; }
+    .step-num {
+      width: 72px; height: 72px; border-radius: 50%;
+      background: var(--forest); color: var(--cream);
+      font-family: 'Fraunces', serif; font-size: 1.6rem; font-weight: 800;
+      display: flex; align-items: center; justify-content: center;
+      margin: 0 auto 1.5rem;
+      border: 4px solid var(--cream);
+      box-shadow: 0 4px 20px rgba(28,61,46,.15);
+      position: relative; z-index: 1;
+    }
+    .step h3 { font-family:'Fraunces',serif; font-size:1.1rem; font-weight:700; color:var(--forest); margin-bottom:.5rem; }
+    .step p { font-size: .85rem; color: var(--muted); line-height: 1.6; font-weight: 300; }
+
+    /* ── TESTIMONIALS ── */
+    .testimonials { background: var(--forest); overflow: hidden; }
+    .testimonials .section-tag { color: var(--amber2); }
+    .testimonials h2 { color: var(--cream); }
+    .testimonials .section-sub { color: rgba(250,246,239,.5); }
+
+    .testimonial-track {
+      display: flex; gap: 1.5rem; margin-top: 3rem;
+      overflow-x: auto; padding-bottom: 1rem;
+      scroll-snap-type: x mandatory;
+      -ms-overflow-style: none; scrollbar-width: none;
+    }
+    .testimonial-track::-webkit-scrollbar { display: none; }
+
+    .testimonial-card {
+      background: rgba(255,255,255,.05); border-radius: 20px;
+      padding: 2rem; min-width: 320px;
+      border: 1px solid rgba(255,255,255,.08);
+      scroll-snap-align: start; flex-shrink: 0;
+      transition: transform .3s;
+    }
+    .testimonial-card:hover { transform: translateY(-4px); }
+    .stars { color: var(--amber2); font-size: 1rem; margin-bottom: 1rem; letter-spacing: .1em; }
+    .testimonial-text { font-size: .9rem; color: rgba(250,246,239,.8); line-height: 1.7; font-weight: 300; margin-bottom: 1.5rem; font-style: italic; }
+    .testimonial-author { display: flex; align-items: center; gap: .8rem; }
+    .author-avatar {
+      width: 38px; height: 38px; border-radius: 50%;
+      background: var(--sage); display: flex; align-items: center; justify-content: center;
+      font-size: 1.1rem;
+    }
+    .author-name { font-size: .85rem; color: var(--cream); font-weight: 600; }
+    .author-info { font-size: .75rem; color: rgba(250,246,239,.4); }
+
+    /* ── DOWNLOAD CTA ── */
+    .download-cta {
+      text-align: center; background: var(--cream2);
+      padding: 7rem 5vw;
+    }
+    .download-cta .section-tag { display: block; text-align: center; }
+    .download-cta h2 { max-width: 600px; margin: 0 auto 1rem; }
+    .download-cta .section-sub { margin: 0 auto 3rem; text-align: center; }
+
+    .store-buttons { display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap; }
+
+    .store-btn {
+      display: flex; align-items: center; gap: 1rem;
+      background: var(--forest); color: var(--cream);
+      padding: .9rem 1.8rem; border-radius: 16px;
+      text-decoration: none; transition: all .25s;
+      border: 1px solid rgba(255,255,255,.08);
+      box-shadow: 0 4px 20px rgba(28,61,46,.2);
+    }
+    .store-btn:hover { background: var(--moss); transform: translateY(-2px); box-shadow: 0 8px 30px rgba(28,61,46,.3); }
+    .store-icon { font-size: 2rem; }
+    .store-label { text-align: left; }
+    .store-sub { font-size: .65rem; opacity: .6; display: block; }
+    .store-name { font-size: 1rem; font-weight: 700; font-family: 'Fraunces', serif; }
+
+    .qr-block {
+      margin-top: 2.5rem; display: flex; align-items: center;
+      justify-content: center; gap: 1rem;
+      color: var(--muted); font-size: .82rem;
+    }
+    .qr-icon { font-size: 2rem; opacity: .4; }
+
+    /* ── FOOTER ── */
+    footer {
+      background: var(--forest); color: rgba(250,246,239,.5);
+      padding: 3rem 5vw 2rem;
+    }
+    .footer-top {
+      display: flex; justify-content: space-between; align-items: flex-start;
+      flex-wrap: wrap; gap: 2rem; margin-bottom: 2.5rem;
+    }
+    .footer-brand .nav-logo { color: var(--cream); margin-bottom: .7rem; }
+    .footer-brand p { font-size: .82rem; max-width: 240px; line-height: 1.6; }
+    .footer-links h4 { color: var(--cream); font-size: .85rem; font-weight: 600; margin-bottom: 1rem; }
+    .footer-links ul { list-style: none; display: flex; flex-direction: column; gap: .5rem; }
+    .footer-links a { color: rgba(250,246,239,.5); text-decoration: none; font-size: .82rem; transition: color .2s; }
+    .footer-links a:hover { color: var(--cream); }
+    .footer-bottom {
+      border-top: 1px solid rgba(255,255,255,.08); padding-top: 1.5rem;
+      display: flex; justify-content: space-between; align-items: center;
+      flex-wrap: wrap; gap: 1rem; font-size: .78rem;
+    }
+    .footer-bottom a { color: rgba(250,246,239,.4); text-decoration: none; }
+    .heart { color: var(--amber2); }
+
+    /* ── ANIMATIONS ── */
+    @keyframes fadeUp {
+      from { opacity:0; transform: translateY(30px); }
+      to   { opacity:1; transform: translateY(0); }
+    }
+
+    .reveal {
+      opacity: 0; transform: translateY(25px);
+      transition: opacity .7s ease, transform .7s ease;
+    }
+    .reveal.visible { opacity: 1; transform: none; }
+
+    /* ── RESPONSIVE ── */
+    @media (max-width: 768px) {
+      .hero { grid-template-columns: 1fr; text-align: center; padding-top: 7rem; }
+      .hero-desc { margin: 0 auto 2rem; }
+      .hero-actions { justify-content: center; }
+      .hero-trust { justify-content: center; }
+      .hero-visual { order: -1; }
+      .float-badge.b1 { right: -60px; font-size: .7rem; }
+      .float-badge.b2 { left: -60px; font-size: .7rem; }
+      .stat-divider { display: none; }
+      .steps::before { display: none; }
+      nav .nav-links { display: none; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav id="nav">
+  <a href="#" class="nav-logo"><span class="paw">🐾</span> PetBridge</a>
+  <div class="nav-links">
+    <a href="#features">Fonctionnalités</a>
+    <a href="#how">Comment ça marche</a>
+    <a href="#temoignages">Témoignages</a>
+    <a href="#download" class="nav-cta">Télécharger l'app</a>
+  </div>
+</nav>
+
+<!-- HERO -->
+<section class="hero">
+  <div class="hero-bg"></div>
+  <div class="blob blob-1"></div>
+  <div class="blob blob-2"></div>
+  <div class="blob blob-3"></div>
+
+  <div class="hero-content">
+    <div class="hero-badge">
+      <span class="dot"></span>
+      Nouveau · Adoption responsable
+    </div>
+    <h1>Trouvez votre<br/><em>compagnon</em><br/>idéal</h1>
+    <p class="hero-desc">
+      PetBridge connecte les animaux en attente d'une famille avec des adoptants sérieux,
+      grâce à un processus encadré, transparent et bienveillant.
+    </p>
+    <div class="hero-actions">
+      <a href="#download" class="btn-primary">
+        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M17.05 20.28c-.98.95-2.05.8-3.08.35-1.09-.46-2.09-.48-3.24 0-1.44.62-2.2.44-3.06-.35C2.79 15.25 3.51 7.7 9.05 7.42c1.42.07 2.38.74 3.2.8 1.21-.24 2.38-.93 3.7-.84 1.58.13 2.77.73 3.53 1.88-3.26 1.96-2.56 6.09.48 7.28-.56 1.58-1.3 3.13-2.91 3.74zM12.03 7.25c-.15-2.23 1.66-4.07 3.74-4.25.29 2.58-2.34 4.5-3.74 4.25z"/></svg>
+        App Store
+      </a>
+      <a href="#download" class="btn-primary" style="background: var(--moss);">
+        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M3.609 1.814L13.792 12 3.61 22.186a.996.996 0 01-.61-.92V2.734a1 1 0 01.609-.92zm10.89 10.893l2.302 2.302-10.937 6.333 8.635-8.635zm3.199-1.671L19.337 12l-1.638.964-2.426-2.426 2.425-2.425zM5.864 3.658l10.937 6.333-2.302 2.302-8.635-8.635z"/></svg>
+        Google Play
+      </a>
+    </div>
+    <div class="hero-trust">
+      <div class="trust-avatars">
+        <span>😊</span><span>🧑</span><span>👩</span><span>👨</span>
+      </div>
+      <span>+2 400 familles ont déjà adopté via PetBridge</span>
+    </div>
+  </div>
+
+  <!-- PHONE MOCKUP -->
+  <div class="hero-visual">
+    <div class="phone-wrap">
+      <div class="phone">
+        <div class="phone-screen">
+          <div class="app-header">
+            <div class="app-header-row">
+              <div class="app-logo-sm">🐾 PetBridge</div>
+              <div class="app-notif">🔔</div>
+            </div>
+            <div class="search-bar">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+              Rechercher un animal…
+            </div>
+          </div>
+          <div class="app-cards">
+            <div class="app-section-title">À la une près de vous</div>
+            <div class="pet-card">
+              <div class="pet-card-img">🐕</div>
+              <div class="pet-card-info">
+                <div class="pet-card-name">Max — Labrador, 2 ans</div>
+                <div class="pet-card-sub">SPA de Lyon · 3 km</div>
+                <span class="pet-card-tag">✓ Vacciné</span>
+              </div>
+            </div>
+            <div class="pet-row">
+              <div class="pet-card">
+                <div class="pet-card-img">🐈</div>
+                <div class="pet-card-info">
+                  <div class="pet-card-name">Luna</div>
+                  <div class="pet-card-sub">Chatte, 1 an</div>
+                  <span class="pet-card-tag">✓ Stérilisée</span>
+                </div>
+              </div>
+              <div class="pet-card">
+                <div class="pet-card-img">🐇</div>
+                <div class="pet-card-info">
+                  <div class="pet-card-name">Floppy</div>
+                  <div class="pet-card-sub">Lapin, 3 mois</div>
+                  <span class="pet-card-tag">Nouveau</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="phone-glow"></div>
+
+      <div class="float-badge b1">
+        <span class="icon">✅</span>
+        <div>
+          <div style="font-size:.65rem;opacity:.6;">Adoption validée</div>
+          <div>Max a trouvé sa famille !</div>
+        </div>
+      </div>
+      <div class="float-badge b2">
+        <span class="icon">💬</span>
+        <div>
+          <div style="font-size:.65rem;opacity:.6;">Nouveau message</div>
+          <div>Suivi post-adoption</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- STATS -->
+<div class="stats-bar">
+  <div class="stat-item">
+    <span class="stat-num">2 400<span>+</span></span>
+    <div class="stat-label">Adoptions réussies</div>
+  </div>
+  <div class="stat-divider"></div>
+  <div class="stat-item">
+    <span class="stat-num">180<span>+</span></span>
+    <div class="stat-label">Refuges partenaires</div>
+  </div>
+  <div class="stat-divider"></div>
+  <div class="stat-item">
+    <span class="stat-num">96<span>%</span></span>
+    <div class="stat-label">Taux de satisfaction</div>
+  </div>
+  <div class="stat-divider"></div>
+  <div class="stat-item">
+    <span class="stat-num">4.8<span>★</span></span>
+    <div class="stat-label">Note sur les stores</div>
+  </div>
+</div>
+
+<!-- FEATURES -->
+<section class="features" id="features">
+  <div class="reveal">
+    <span class="section-tag">Pourquoi PetBridge</span>
+    <h2>L'adoption comme<br/>elle devrait être</h2>
+    <p class="section-sub">Un processus encadré de bout en bout, pour des adoptions qui durent.</p>
+  </div>
+  <div class="features-grid">
+    <div class="feature-card reveal">
+      <div class="feature-icon">🔍</div>
+      <h3>Matching intelligent</h3>
+      <p>Notre algorithme analyse votre profil, votre mode de vie et vos préférences pour vous proposer les animaux les plus compatibles.</p>
+    </div>
+    <div class="feature-card reveal">
+      <div class="feature-icon">📋</div>
+      <h3>Dossier d'adoption guidé</h3>
+      <p>Un formulaire structuré en 4 étapes vous guide dans la constitution de votre dossier, validé par nos équipes de modération.</p>
+    </div>
+    <div class="feature-card reveal">
+      <div class="feature-icon">💬</div>
+      <h3>Communication sécurisée</h3>
+      <p>Échangez directement avec les refuges et les anciens propriétaires via notre messagerie intégrée, sécurisée et modérée.</p>
+    </div>
+    <div class="feature-card reveal">
+      <div class="feature-icon">📅</div>
+      <h3>Suivi post-adoption</h3>
+      <p>Un système de check-ins réguliers vous permet de partager les nouvelles de votre animal et de rester en lien avec le refuge.</p>
+    </div>
+    <div class="feature-card reveal">
+      <div class="feature-icon">🛡️</div>
+      <h3>Modération & sécurité</h3>
+      <p>Chaque annonce et chaque adoptant sont vérifiés par notre équipe. Signalez un contenu douteux en un tap.</p>
+    </div>
+    <div class="feature-card reveal">
+      <div class="feature-icon">📸</div>
+      <h3>Galerie photo complète</h3>
+      <p>Consultez des photos haute qualité de chaque animal, uploadées directement par les refuges partenaires.</p>
+    </div>
+  </div>
+</section>
+
+<!-- HOW IT WORKS -->
+<section id="how">
+  <div class="reveal" style="text-align:center;">
+    <span class="section-tag">Comment ça marche</span>
+    <h2>En 4 étapes simples</h2>
+    <p class="section-sub" style="margin:0 auto;">De la recherche à l'adoption, PetBridge vous accompagne à chaque instant.</p>
+  </div>
+  <div class="steps">
+    <div class="step reveal">
+      <div class="step-num">1</div>
+      <h3>Créez votre profil</h3>
+      <p>Renseignez vos informations, votre logement, votre mode de vie pour un matching personnalisé.</p>
+    </div>
+    <div class="step reveal">
+      <div class="step-num">2</div>
+      <h3>Parcourez les animaux</h3>
+      <p>Explorez les annonces filtrées selon vos critères et coup de cœur pour l'animal idéal.</p>
+    </div>
+    <div class="step reveal">
+      <div class="step-num">3</div>
+      <h3>Déposez votre dossier</h3>
+      <p>Complétez votre demande en quelques minutes. Notre équipe valide et vous met en relation.</p>
+    </div>
+    <div class="step reveal">
+      <div class="step-num">4</div>
+      <h3>Accueillez & suivez</h3>
+      <p>Accueillez votre nouvel ami et partagez son évolution via les check-ins post-adoption.</p>
+    </div>
+  </div>
+</section>
+
+<!-- TESTIMONIALS -->
+<section class="testimonials" id="temoignages">
+  <div class="reveal">
+    <span class="section-tag">Témoignages</span>
+    <h2>Ils ont fait confiance<br/>à PetBridge</h2>
+    <p class="section-sub">Des milliers de familles ont trouvé leur compagnon grâce à nous.</p>
+  </div>
+  <div class="testimonial-track">
+    <div class="testimonial-card">
+      <div class="stars">★★★★★</div>
+      <p class="testimonial-text">"L'application est vraiment intuitive. On a pu trouver notre chienne Bella en moins d'une semaine, et le suivi post-adoption est une excellente idée — ça nous a rassurés."</p>
+      <div class="testimonial-author">
+        <div class="author-avatar">👩</div>
+        <div>
+          <div class="author-name">Camille D.</div>
+          <div class="author-info">Adoptante · Lyon</div>
+        </div>
+      </div>
+    </div>
+    <div class="testimonial-card">
+      <div class="stars">★★★★★</div>
+      <p class="testimonial-text">"En tant que refuge, PetBridge nous a permis de tripler nos adoptions tout en améliorant la qualité des dossiers reçus. La modération intégrée est un vrai plus."</p>
+      <div class="testimonial-author">
+        <div class="author-avatar">🏠</div>
+        <div>
+          <div class="author-name">Association SPA Bordeaux</div>
+          <div class="author-info">Refuge partenaire</div>
+        </div>
+      </div>
+    </div>
+    <div class="testimonial-card">
+      <div class="stars">★★★★★</div>
+      <p class="testimonial-text">"Je craignais que le processus soit compliqué, mais c'était vraiment simple. Mon chat Milo est chez moi depuis 6 mois et tout se passe à merveille !"</p>
+      <div class="testimonial-author">
+        <div class="author-avatar">👨</div>
+        <div>
+          <div class="author-name">Thomas R.</div>
+          <div class="author-info">Adoptant · Paris</div>
+        </div>
+      </div>
+    </div>
+    <div class="testimonial-card">
+      <div class="stars">★★★★★</div>
+      <p class="testimonial-text">"La messagerie sécurisée avec le refuge nous a permis de poser toutes nos questions avant l'adoption. On savait exactement à quoi s'attendre. Parfait !"</p>
+      <div class="testimonial-author">
+        <div class="author-avatar">👧</div>
+        <div>
+          <div class="author-name">Sophie & Marc L.</div>
+          <div class="author-info">Adoptants · Marseille</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- DOWNLOAD CTA -->
+<section class="download-cta" id="download">
+  <span class="section-tag">Téléchargement gratuit</span>
+  <h2 class="reveal">Commencez votre<br/><em style="font-style:italic;color:var(--amber);">aventure</em> aujourd'hui</h2>
+  <p class="section-sub reveal">Disponible sur iOS et Android. Gratuit pour les adoptants,<br/>sans publicité, sans compromis.</p>
+  <div class="store-buttons reveal">
+    <a href="#" class="store-btn">
+      <span class="store-icon"></span>
+      <div class="store-label">
+        <span class="store-sub">Télécharger sur</span>
+        <span class="store-name">App Store</span>
+      </div>
+    </a>
+    <a href="#" class="store-btn" style="background:var(--moss);">
+      <span class="store-icon">🤖</span>
+      <div class="store-label">
+        <span class="store-sub">Disponible sur</span>
+        <span class="store-name">Google Play</span>
+      </div>
+    </a>
+    <a href="#" class="store-btn" style="background: rgba(28,61,46,.15); color:var(--forest); border:1.5px solid rgba(28,61,46,.2);">
+      <span class="store-icon">🌐</span>
+      <div class="store-label">
+        <span class="store-sub" style="color:var(--muted);">Accéder via</span>
+        <span class="store-name">Web App</span>
+      </div>
+    </a>
+  </div>
+  <div class="qr-block reveal">
+    <span class="qr-icon">📱</span>
+    <span>Scannez le QR code pour télécharger instantanément</span>
+    <span class="qr-icon">📷</span>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <div class="footer-top">
+    <div class="footer-brand">
+      <a href="#" class="nav-logo"><span class="paw">🐾</span> PetBridge</a>
+      <p>L'adoption responsable, accessible à tous. Connecter des vies, un animal à la fois.</p>
+    </div>
+    <div class="footer-links">
+      <h4>Application</h4>
+      <ul>
+        <li><a href="#">Fonctionnalités</a></li>
+        <li><a href="#">Refuges partenaires</a></li>
+        <li><a href="#">Télécharger</a></li>
+        <li><a href="#">Mise à jour</a></li>
+      </ul>
+    </div>
+    <div class="footer-links">
+      <h4>Adoption</h4>
+      <ul>
+        <li><a href="#">Comment ça marche</a></li>
+        <li><a href="#">Guide de l'adoption</a></li>
+        <li><a href="#">Post-adoption</a></li>
+        <li><a href="#">FAQ</a></li>
+      </ul>
+    </div>
+    <div class="footer-links">
+      <h4>Entreprise</h4>
+      <ul>
+        <li><a href="#">À propos</a></li>
+        <li><a href="#">Blog</a></li>
+        <li><a href="#">Presse</a></li>
+        <li><a href="#">Contact</a></li>
+      </ul>
+    </div>
+  </div>
+  <div class="footer-bottom">
+    <span>© 2025 PetBridge. Fait avec <span class="heart">♥</span> pour les animaux.</span>
+    <div style="display:flex;gap:1.5rem;">
+      <a href="#">Confidentialité</a>
+      <a href="#">CGU</a>
+      <a href="#">Mentions légales</a>
+    </div>
+  </div>
+</footer>
+
+<script>
+  // Sticky nav
+  const nav = document.getElementById('nav');
+  window.addEventListener('scroll', () => {
+    nav.classList.toggle('scrolled', window.scrollY > 20);
+  });
+
+  // Scroll reveal
+  const reveals = document.querySelectorAll('.reveal');
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach((e, i) => {
+      if (e.isIntersecting) {
+        setTimeout(() => e.target.classList.add('visible'), i * 80);
+      }
+    });
+  }, { threshold: 0.12 });
+  reveals.forEach(el => observer.observe(el));
+
+  // Stagger feature cards
+  document.querySelectorAll('.feature-card, .step, .testimonial-card').forEach((el, i) => {
+    el.style.transitionDelay = `${i * 0.08}s`;
+  });
+</script>
+</body>
+</html>

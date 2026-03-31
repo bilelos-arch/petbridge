@@ -3,10 +3,19 @@ import { PrismaService } from '../prisma/prisma.service';
 import { CreateAdoptionDto } from './dto/create-adoption.dto';
 import { AdoptionFiltersDto } from './dto/adoption-filters.dto';
 import { AdoptionStatus, AnimalStatus } from '@prisma/client';
+import { CheckInsService } from '../checkins/checkins.service';
+import { MatchingService } from '../matching/matching.service';
+import { NotificationsService } from '../notifications/notifications.service';
+
 
 @Injectable()
 export class AdoptionsService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly checkInsService: CheckInsService,
+    private readonly matchingService: MatchingService,
+    private readonly notificationsService: NotificationsService,
+) {}
 
   /**
    * Get all adoption requests for admin
@@ -96,6 +105,7 @@ export class AdoptionsService {
       where: { id: dto.animalId },
       select: {
         id: true,
+        name: true,
         ownerId: true,
         status: true,
       },
@@ -128,7 +138,7 @@ export class AdoptionsService {
     }
 
     // Create the adoption request
-    return this.prisma.adoptionRequest.create({
+    const adoptionRequest = await this.prisma.adoptionRequest.create({
       data: {
         animalId: dto.animalId,
         adopterId,
@@ -151,6 +161,16 @@ export class AdoptionsService {
             },
           },
         },
+        adopter: {
+          select: {
+            profile: {
+              select: {
+                firstName: true,
+                lastName: true,
+              },
+            },
+          },
+        },
         donneur: {
           select: {
             id: true,
@@ -165,6 +185,17 @@ export class AdoptionsService {
         },
       },
     });
+
+    // Send push notification to animal owner
+    const adopteurPrenom = adoptionRequest.adopter?.profile?.firstName || 'Quelqu\'un';
+    await this.notificationsService.sendPushNotification(
+      animal.ownerId,
+      '🐾 Nouvelle demande d\'adoption',
+      `${adopteurPrenom} souhaite adopter ${animal?.name}`,
+      { type: 'adoption_received', adoptionId: adoptionRequest.id }
+    );
+
+    return adoptionRequest;
   }
 
   /**
@@ -210,53 +241,41 @@ export class AdoptionsService {
    * Get adoption requests received by current user as donneur
    */
   async getReceivedRequests(donneurId: string) {
-    return this.prisma.adoptionRequest.findMany({
+    const requests = await this.prisma.adoptionRequest.findMany({
       where: { donneurId },
       orderBy: { createdAt: 'desc' },
       include: {
-        animal: {
-          select: {
-            id: true,
-            name: true,
-            species: true,
-            photos: {
-              select: {
-                id: true,
-                url: true,
-                isPrimary: true,
-              },
-              take: 1,
-            },
-          },
-        },
+        animal: true, // Include complete animal data for scoring
         adopter: {
           select: {
             id: true,
             email: true,
-            profile: {
-              select: {
-                firstName: true,
-                lastName: true,
-                avatarUrl: true,
-                phone: true,
-                city: true,
-                housingType: true,
-                surfaceArea: true,
-                hasGarden: true,
-                hasChildren: true,
-                childrenAges: true,
-                hasOtherPets: true,
-                otherPetsDesc: true,
-                hoursAbsent: true,
-                hasPetExperience: true,
-                petExpDesc: true,
-              },
-            },
+            profile: true, // Include complete profile data for scoring
           },
         },
         thread: true,
       },
     });
+
+    // Calculate match score for each request
+    const requestsWithMatchScore = await Promise.all(
+      requests.map(async (request) => {
+        let matchScore = 0;
+        if (request.adopter.profile) {
+          matchScore = this.matchingService.calculateCompatibilityScore(
+            request.adopter.profile,
+            request.animal,
+          );
+        }
+
+        return {
+          ...request,
+          matchScore,
+        };
+      }),
+    );
+
+    return requestsWithMatchScore;
   }
 
   /**
@@ -414,6 +433,19 @@ export class AdoptionsService {
       throw new ForbiddenException('Only pending requests can be accepted');
     }
 
+    // Get the full adoption request with adopter info
+    const fullRequest = await this.prisma.adoptionRequest.findUnique({
+      where: { id },
+      include: {
+        adopter: {
+          select: { id: true },
+        },
+        animal: {
+          select: { name: true },
+        },
+      },
+    });
+
     // Step 1: Update adoption request to ACCEPTEE
     await this.prisma.adoptionRequest.update({
       where: { id },
@@ -442,10 +474,23 @@ export class AdoptionsService {
     });
 
     // Step 4: Update animal status to ADOPTE
-    await this.prisma.animal.update({
+    const animal = await this.prisma.animal.update({
       where: { id: request.animalId },
-      data: { status: AnimalStatus.ADOPTE },
+      data: { status: AnimalStatus.EN_COURS_ADOPTION },
     });
+
+    // Step 5: Créer les check-ins automatiques J+1, J+3, J+14, J+30
+    await this.checkInsService.createAutoCheckIns(id, donneurId);
+
+    // Send push notification to adopter
+    if (fullRequest) {
+      await this.notificationsService.sendPushNotification(
+        fullRequest.adopter.id,
+        '✅ Demande acceptée !',
+        `Votre demande pour ${fullRequest.animal.name} a été acceptée`,
+        { type: 'adoption_accepted', adoptionId: id }
+      );
+    }
 
     // Return final result
     return this.prisma.adoptionRequest.findUnique({
@@ -512,7 +557,7 @@ export class AdoptionsService {
     }
 
     // Update the adoption request
-    return this.prisma.adoptionRequest.update({
+    const adoptionRequest = await this.prisma.adoptionRequest.update({
       where: { id },
       data: {
         status: AdoptionStatus.REFUSEE,
@@ -561,5 +606,55 @@ export class AdoptionsService {
         },
       },
     });
+
+    // Send push notification to adopter
+    await this.notificationsService.sendPushNotification(
+      adoptionRequest.adopterId,
+      '❌ Demande refusée',
+      `Votre demande pour ${adoptionRequest.animal.name} a été refusée`,
+      { type: 'adoption_rejected', adoptionId: id }
+    );
+
+    return adoptionRequest;
+  }
+
+  /**
+   * Send a pre-acceptance message to adoption request
+   */
+  async sendPreAcceptanceMessage(adoptionId: string, userId: string, content: string) {
+    // Vérifier que l'user est adoptant ou donneur de cette demande
+    const request = await this.prisma.adoptionRequest.findUnique({
+      where: { id: adoptionId },
+      select: { adopterId: true, donneurId: true, status: true }
+    });
+    if (!request) throw new NotFoundException('Demande introuvable');
+    if (userId !== request.adopterId && userId !== request.donneurId)
+      throw new ForbiddenException('Non autorisé');
+
+    // Créer le thread si inexistant
+    const thread = await this.prisma.thread.upsert({
+      where: { adoptionId },
+      create: { adoptionId },
+      update: {},
+    });
+
+    // Créer le message
+    const message = await this.prisma.message.create({
+      data: {
+        threadId: thread.id,
+        senderId: userId,
+        content,
+      },
+      include: {
+        sender: {
+          select: {
+            id: true,
+            profile: { select: { firstName: true, lastName: true, avatarUrl: true } }
+          }
+        }
+      }
+    });
+
+    return { threadId: thread.id, message };
   }
 }

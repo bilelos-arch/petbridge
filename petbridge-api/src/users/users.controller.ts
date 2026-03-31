@@ -1,4 +1,5 @@
-import { Controller, Get, Patch, Body, Param, UseGuards, Query } from '@nestjs/common';
+import { Controller, Get, Patch, Body, Param, UseGuards, Query, Post, UseInterceptors, UploadedFile } from '@nestjs/common';
+import { FileInterceptor } from '@nestjs/platform-express';
 import { UsersService } from './users.service';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
@@ -49,8 +50,35 @@ export class UsersController {
     }
 
     @Public()
+    @Get(':id/public')
+    async getPublicProfile(
+        @Param('id') id: string,
+        @Query('animalId') animalId?: string,
+    ) {
+        return this.usersService.getUserPublicProfile(id, animalId);
+    }
+
     @Get(':id')
     getUserPublic(@Param('id') id: string) {
         return this.usersService.getUserPublicProfile(id);
+    }
+
+    @Post('me/avatar')
+    @UseInterceptors(FileInterceptor('photo'))
+    async uploadAvatar(
+        @CurrentUser() user: any,
+        @UploadedFile() file: any,
+    ) {
+        return this.usersService.uploadAvatar(user.id, file);
+    }
+
+    @Patch('me/push-token')
+    updatePushToken(@CurrentUser() user: any, @Body() body: { token: string }) {
+        return this.usersService.updatePushToken(user.id, body.token);
+    }
+
+    @Patch('me/location')
+    updateLocation(@CurrentUser() user: any, @Body() body: { latitude: number; longitude: number }) {
+        return this.usersService.updateLocation(user.id, body.latitude, body.longitude);
     }
 }

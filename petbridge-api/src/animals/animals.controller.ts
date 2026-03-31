@@ -52,6 +52,16 @@ export class AnimalsController {
     return this.animalsService.getAnimals(filters);
   }
 
+  @Get('owner/me')
+  async getMyAnimals(@CurrentUser() user: any) {
+    return this.animalsService.getAnimalsByOwner(user.id);
+  }
+
+  @Get('my')
+  async getMyAnimalsV2(@CurrentUser() user: any) {
+    return this.animalsService.getAnimalsByOwner(user.id);
+  }
+
   @Public()
   @Get(':id')
   async getAnimalById(@Param('id') id: string) {
@@ -81,7 +91,7 @@ export class AnimalsController {
   }
 
   @Post(':id/photos')
-  @UseInterceptors(FileInterceptor('file'))
+  @UseInterceptors(FileInterceptor('photo'))
   async uploadPhoto(
     @Param('id') id: string,
     @UploadedFile() file: any,
@@ -126,10 +136,5 @@ export class AnimalsController {
     @Body() rejectAnimalDto: RejectAnimalDto,
   ) {
     return this.animalsService.rejectAnimal(id, rejectAnimalDto);
-  }
-
-  @Get('owner/me')
-  async getMyAnimals(@CurrentUser() user: any) {
-    return this.animalsService.getAnimalsByOwner(user.id);
   }
 }

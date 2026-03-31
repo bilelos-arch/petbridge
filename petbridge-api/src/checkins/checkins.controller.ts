@@ -1,50 +1,58 @@
-import {
-  Controller,
-  Get,
-  Post,
-  Param,
-  Body,
-  UseGuards,
-  ParseUUIDPipe,
-} from '@nestjs/common';
+import { Controller, Get, Post, Put, Param, Body, UseGuards, ParseUUIDPipe } from '@nestjs/common';
 import { CheckInsService } from './checkins.service';
-import { CreateCheckInDto } from './dto/create-checkin.dto';
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 
-@Controller()
+@Controller('checkins')
 @UseGuards(JwtAuthGuard)
 export class CheckInsController {
   constructor(private readonly checkInsService: CheckInsService) {}
 
-  /**
-   * Create a new check-in (adopter only)
-   */
-  @Post('threads/:threadId/checkins')
-  async createCheckIn(
-    @Param('threadId', ParseUUIDPipe) threadId: string,
-    @CurrentUser() currentUser: any,
-    @Body() createCheckInDto: CreateCheckInDto,
-  ) {
-    return this.checkInsService.createCheckIn(threadId, currentUser.id, createCheckInDto);
+  @Get('my')
+  async getMyCheckIns(@CurrentUser() currentUser: any) {
+    return this.checkInsService.getMyCheckIns(currentUser.id);
   }
 
-  /**
-   * Get all check-ins for a thread
-   */
-  @Get('threads/:threadId/checkins')
-  async getCheckInsByThreadId(
-    @Param('threadId', ParseUUIDPipe) threadId: string,
+  @Get('adoption/:adoptionId')
+  async getByAdoption(
+    @Param('adoptionId', ParseUUIDPipe) adoptionId: string,
     @CurrentUser() currentUser: any,
   ) {
-    return this.checkInsService.getCheckInsByThreadId(threadId, currentUser.id);
+    return this.checkInsService.getCheckInsByAdoption(adoptionId, currentUser.id);
   }
 
-  /**
-   * Get all check-ins for current user
-   */
-  @Get('checkins/my')
-  async getCheckInsByCurrentUser(@CurrentUser() currentUser: any) {
-    return this.checkInsService.getCheckInsByCurrentUser(currentUser.id);
+  @Post('adoption/:adoptionId')
+  async create(
+    @Param('adoptionId', ParseUUIDPipe) adoptionId: string,
+    @CurrentUser() currentUser: any,
+    @Body() dto: { message?: string; scheduledFor?: string },
+  ) {
+    return this.checkInsService.createCheckIn(adoptionId, currentUser.id, dto);
+  }
+
+  @Put(':id/respond')
+  async respond(
+    @Param('id', ParseUUIDPipe) id: string,
+    @CurrentUser() currentUser: any,
+    @Body() dto: { responseNote?: string; photoUrl?: string; wellbeingScore?: number },
+  ) {
+    return this.checkInsService.respondToCheckIn(id, currentUser.id, dto);
+  }
+
+  @Get('adoption/:adoptionId/timeline')
+  async getTimeline(
+    @Param('adoptionId', ParseUUIDPipe) adoptionId: string,
+    @CurrentUser() currentUser: any,
+  ) {
+    return this.checkInsService.getTimeline(adoptionId, currentUser.id);
+  }
+
+  @Post('auto/:adoptionId')
+  async createAutoCheckIns(
+    @Param('adoptionId', ParseUUIDPipe) adoptionId: string,
+    @CurrentUser() currentUser: any,
+  ) {
+    await this.checkInsService.createAutoCheckIns(adoptionId, currentUser.id);
+    return { message: 'Check-ins créés', count: 4 };
   }
 }

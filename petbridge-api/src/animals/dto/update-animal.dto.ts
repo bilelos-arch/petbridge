@@ -1,5 +1,5 @@
 import { IsString, IsEnum, IsOptional, IsBoolean, IsNumber, IsDateString } from 'class-validator';
-import { Species, Sex, Size, AnimalStatus, Temperament } from '@prisma/client';
+import { Species, Sex, Size, AnimalStatus, Temperament, ActivityLevel } from '@prisma/client';
 
 export class UpdateAnimalDto {
   @IsOptional()
@@ -9,6 +9,10 @@ export class UpdateAnimalDto {
   @IsOptional()
   @IsEnum(Species)
   species?: Species;
+
+  @IsString()
+  @IsOptional()
+  city?: string;
 
   @IsOptional()
   @IsEnum(Sex)
@@ -44,7 +48,7 @@ export class UpdateAnimalDto {
 
   @IsOptional()
   @IsString()
-  breed?: string;
+  breedId?: string;
 
   @IsOptional()
   @IsString()
@@ -61,4 +65,16 @@ export class UpdateAnimalDto {
   @IsOptional()
   @IsEnum(AnimalStatus)
   status?: AnimalStatus;
+
+  @IsOptional()
+  @IsBoolean()
+  goodWithKids?: boolean;
+
+  @IsOptional()
+  @IsBoolean()
+  goodWithPets?: boolean;
+
+  @IsOptional()
+  @IsEnum(ActivityLevel)
+  activityLevel?: ActivityLevel;
 }

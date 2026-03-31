@@ -5,10 +5,16 @@ import { UpdateProfileDto } from './dto/update-profile.dto';
 import { AdminUserFiltersDto } from './dto/admin-user-filters.dto';
 import { BanUserDto } from './dto/ban-user.dto';
 import { Prisma } from '@prisma/client';
+import { CloudinaryService } from '../animals/cloudinary/cloudinary.service';
+import { MatchingService } from '../matching/matching.service';
 
 @Injectable()
 export class UsersService {
-    constructor(private readonly prisma: PrismaService) { }
+    constructor(
+        private readonly prisma: PrismaService,
+        private readonly cloudinaryService: CloudinaryService,
+        private readonly matchingService: MatchingService,
+    ) {}
 
     async getAdminAllUsers(filters: AdminUserFiltersDto) {
         const { search, isBanned, page = 1, limit = 10 } = filters;
@@ -124,20 +130,120 @@ export class UsersService {
         return profile;
     }
 
-    async getUserPublicProfile(userId: string) {
+    async getUserPublicProfile(userId: string, animalId?: string) {
         const user = await this.prisma.user.findUnique({
             where: { id: userId, isActive: true, isBanned: false },
-            include: { profile: true },
+            select: {
+                id: true,
+                roles: true,
+                profile: {
+                    select: {
+                        firstName: true,
+                        lastName: true,
+                        avatarUrl: true,
+                        city: true,
+                        phone: true,
+                        housingType: true,
+                        surfaceArea: true,
+                        hasGarden: true,
+                        hasChildren: true,
+                        childrenAges: true,
+                        hasOtherPets: true,
+                        otherPetsDesc: true,
+                        hoursAbsent: true,
+                        hasPetExperience: true,
+                        petExpDesc: true,
+                        warningBadge: true,
+                        completionBadge: true,
+                        saviorBadge: true,
+                        saviorCount: true,
+                    },
+                },
+            },
         });
 
         if (!user || !user.profile) {
             throw new NotFoundException('Profil public introuvable');
         }
 
-        return {
-            firstName: user.profile.firstName,
-            city: user.profile.city,
-            avatarUrl: user.profile.avatarUrl,
-        };
+        // Calculate match score if animalId is provided
+        if (animalId) {
+            const adopterProfile = await this.prisma.userProfile.findUnique({
+                where: { userId: userId },
+            });
+
+            const animal = await this.prisma.animal.findUnique({
+                where: { id: animalId },
+            });
+
+            if (adopterProfile && animal) {
+                const matchScore = this.matchingService.calculateCompatibilityScore(adopterProfile, animal);
+                return {
+                    ...user,
+                    matchScore,
+                };
+            }
+        }
+
+        return user;
+    }
+
+    async uploadAvatar(userId: string, file: any) {
+        const result = await this.cloudinaryService.uploadImage(file);
+        return this.prisma.userProfile.update({
+            where: { userId },
+            data: { avatarUrl: result.secure_url },
+        });
+    }
+
+    async getPublicProfile(id: string) {
+        const user = await this.prisma.user.findUnique({
+            where: { id },
+            select: {
+            id: true,
+            roles: true,
+            profile: {
+                select: {
+                firstName: true,
+                lastName: true,
+                avatarUrl: true,
+                city: true,
+                phone: true,
+                housingType: true,
+                surfaceArea: true,
+                hasGarden: true,
+                hasChildren: true,
+                childrenAges: true,
+                hasOtherPets: true,
+                otherPetsDesc: true,
+                hoursAbsent: true,
+                hasPetExperience: true,
+                petExpDesc: true,
+                saviorBadge: true,
+                saviorCount: true,
+                },
+            },
+            },
+        });
+        if (!user) throw new NotFoundException('User not found');
+        return user;
+    }
+
+    async updatePushToken(userId: string, token: string) {
+        return this.prisma.user.update({
+            where: { id: userId },
+            data: { expoPushToken: token },
+        });
+    }
+
+    async updateLocation(userId: string, latitude: number, longitude: number) {
+        return this.prisma.userProfile.update({
+            where: { userId },
+            data: {
+                lastLatitude: latitude,
+                lastLongitude: longitude,
+                lastLocationAt: new Date(),
+            },
+        });
     }
 }

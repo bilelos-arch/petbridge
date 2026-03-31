@@ -1,10 +1,14 @@
 import { Injectable, ForbiddenException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
+import { NotificationsService } from '../notifications/notifications.service';
 import { CreateMessageDto } from './dto/create-message.dto';
 
 @Injectable()
 export class ThreadsService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly notificationsService: NotificationsService,
+  ) {}
 
   /**
    * Verify current user has access to the thread
@@ -285,7 +289,7 @@ export class ThreadsService {
     });
 
     // Transform sender data
-    return {
+    const transformedResult = {
       ...result,
       sender: {
         id: result.sender.id,
@@ -293,6 +297,43 @@ export class ThreadsService {
         photoUrl: result.sender.profile?.avatarUrl,
       },
     };
+
+    // Notification push au destinataire
+    try {
+      const thread = await this.prisma.thread.findUnique({
+        where: { id: threadId },
+        include: {
+          adoption: {
+            select: {
+              adopterId: true,
+              donneurId: true,
+              animal: { select: { name: true } },
+            },
+          },
+        },
+      });
+
+      if (thread) {
+        const recipientId = thread.adoption.adopterId === currentUserId
+          ? thread.adoption.donneurId
+          : thread.adoption.adopterId;
+
+        const senderName = `${result.sender.profile?.firstName || ''} ${result.sender.profile?.lastName || ''}`.trim();
+
+        await this.notificationsService.sendPushNotification(
+          recipientId,
+          `💬 ${senderName}`,
+          createMessageDto.content.length > 60
+            ? createMessageDto.content.substring(0, 60) + '...'
+            : createMessageDto.content,
+          { type: 'new_message', threadId, animalName: thread.adoption.animal.name },
+        );
+      }
+    } catch (e) {
+      console.error('Erreur notif message:', e);
+    }
+
+    return transformedResult;
   }
 
   /**
